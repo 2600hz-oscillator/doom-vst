@@ -35,26 +35,27 @@ void AudioAnalyzer::pushSamples(const float* data, int numSamples)
 
 void AudioAnalyzer::processFFT()
 {
-    // Copy input and apply window
+    // Compute time-domain RMS from raw input samples (before windowing)
+    float timeSumSq = 0.0f;
+    for (int i = 0; i < kFFTSize; ++i)
+    {
+        float s = fftInput[static_cast<size_t>(i)];
+        timeSumSq += s * s;
+    }
+    rmsLevel = std::sqrt(timeSumSq / static_cast<float>(kFFTSize));
+
+    // Copy input and apply window for FFT
     std::copy(fftInput.begin(), fftInput.end(), fftData.begin());
     std::fill(fftData.begin() + kFFTSize, fftData.end(), 0.0f);
 
     window.multiplyWithWindowingTable(fftData.data(), static_cast<size_t>(kFFTSize));
     fft.performFrequencyOnlyForwardTransform(fftData.data());
 
-    // Extract magnitudes and compute RMS
-    float sumSq = 0.0f;
+    // Extract magnitudes for spectrum display
     const int specSize = kFFTSize / 2 + 1;
-    const float invSize = 1.0f / static_cast<float>(kFFTSize);
 
     for (int i = 0; i < specSize; ++i)
-    {
-        float mag = fftData[static_cast<size_t>(i)] * invSize;
-        magnitudeSpectrum[static_cast<size_t>(i)] = mag;
-        sumSq += mag * mag;
-    }
-
-    rmsLevel = std::sqrt(sumSq / static_cast<float>(specSize));
+        magnitudeSpectrum[static_cast<size_t>(i)] = fftData[static_cast<size_t>(i)];
 }
 
 void AudioAnalyzer::computeBands()

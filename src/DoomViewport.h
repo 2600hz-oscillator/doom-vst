@@ -5,6 +5,9 @@
 #include "doom/DoomEngine.h"
 #include "audio/AudioAnalyzer.h"
 #include "audio/SignalBus.h"
+#include "routing/SignalRouter.h"
+#include "routing/RouteConfig.h"
+#include "scenes/SceneManager.h"
 #include <memory>
 
 class DoomViewport : public juce::Component,
@@ -21,7 +24,7 @@ public:
     void renderOpenGL() override;
     void openGLContextClosing() override;
 
-    // Access analyzer results (for scenes to read)
+    // Access analyzer results
     const AudioAnalyzer& getAnalyzer() const { return analyzer; }
 
 private:
@@ -31,14 +34,21 @@ private:
     std::unique_ptr<DoomEngine> engine;
     AudioAnalyzer analyzer;
     SignalBus& signalBus;
+    SignalRouter router;
+    SceneManager sceneManager;
 
     static constexpr int kWidth = 320;
     static constexpr int kHeight = 200;
 
-    // Temp buffer for pulling audio from ring buffer
     std::vector<float> pullBuffer;
 
-    juce::String findWadPath() const;
+    // Timing
+    double lastFrameTime = 0.0;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomViewport)
+    // Scene switching from MIDI PC
+    int lastProgramChange = -1;
+
+    juce::String findWadPath() const;
+    juce::String findConfigPath(const juce::String& bundleRoot) const;
+    void loadDefaultConfig();
 };

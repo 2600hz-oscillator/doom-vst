@@ -38,6 +38,10 @@ target_sources(DoomViz PRIVATE
     src/audio/MidiHandler.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
+    src/scenes/SceneManager.cpp
+    src/scenes/KillRoomScene.cpp
+    src/scenes/SpriteSpectrumScene.cpp
+    src/scenes/AnalyzerRoomScene.cpp
 )
 
 target_include_directories(DoomViz PRIVATE

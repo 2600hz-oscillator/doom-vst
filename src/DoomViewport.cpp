@@ -1,4 +1,7 @@
 #include "DoomViewport.h"
+#include "scenes/KillRoomScene.h"
+#include "scenes/SpriteSpectrumScene.h"
+#include "scenes/AnalyzerRoomScene.h"
 
 DoomViewport::DoomViewport(SignalBus& bus, double sampleRate)
     : signalBus(bus), pullBuffer(8192, 0.0f)
@@ -21,30 +24,66 @@ void DoomViewport::setSampleRate(double sr)
 
 juce::String DoomViewport::findWadPath() const
 {
-    // For VST3/AU: find our own bundle via the binary's location
     auto thisModule = juce::File::getSpecialLocation(
         juce::File::currentExecutableFile);
     auto bundleRoot = thisModule.getParentDirectory()
                                 .getParentDirectory()
                                 .getParentDirectory();
 
-    // Check Resources inside our own bundle
     auto bundleResources = bundleRoot.getChildFile("Contents/Resources/DOOM1.WAD");
     if (bundleResources.existsAsFile())
         return bundleResources.getFullPathName();
 
-    // Check next to the plugin bundle
     auto nextToBundle = bundleRoot.getParentDirectory().getChildFile("DOOM1.WAD");
     if (nextToBundle.existsAsFile())
         return nextToBundle.getFullPathName();
 
-    // Check resources/ relative to CWD (dev builds)
     auto devPath = juce::File::getCurrentWorkingDirectory()
                        .getChildFile("resources/DOOM1.WAD");
     if (devPath.existsAsFile())
         return devPath.getFullPathName();
 
     return {};
+}
+
+juce::String DoomViewport::findConfigPath(const juce::String& bundleRoot) const
+{
+    // Check bundle Resources
+    auto bundleCfg = juce::File(bundleRoot).getChildFile("Contents/Resources/default_killroom.yaml");
+    if (bundleCfg.existsAsFile())
+        return bundleCfg.getFullPathName();
+
+    // Check config/ relative to CWD
+    auto devCfg = juce::File::getCurrentWorkingDirectory()
+                      .getChildFile("config/default_killroom.yaml");
+    if (devCfg.existsAsFile())
+        return devCfg.getFullPathName();
+
+    return {};
+}
+
+void DoomViewport::loadDefaultConfig()
+{
+    auto thisModule = juce::File::getSpecialLocation(
+        juce::File::currentExecutableFile);
+    auto bundleRoot = thisModule.getParentDirectory()
+                                .getParentDirectory()
+                                .getParentDirectory();
+
+    auto configPath = findConfigPath(bundleRoot.getFullPathName());
+    if (configPath.isNotEmpty())
+    {
+        RouteConfig cfg;
+        if (cfg.loadFromFile(configPath.toStdString()))
+        {
+            router.loadConfig(cfg.getConfig());
+            DBG("Loaded config: " + configPath);
+        }
+    }
+    else
+    {
+        DBG("No config file found, using defaults");
+    }
 }
 
 void DoomViewport::newOpenGLContextCreated()
@@ -59,8 +98,19 @@ void DoomViewport::newOpenGLContextCreated()
     else
     {
         DBG("DoomViewport: Could not find or load DOOM1.WAD");
-        DBG("  Searched: " + wadPath);
     }
+
+    // Set up scenes
+    sceneManager.addScene(std::make_unique<KillRoomScene>());
+    sceneManager.addScene(std::make_unique<SpriteSpectrumScene>());
+    sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer));
+
+    if (engine->isMapLoaded())
+        sceneManager.init(*engine);
+
+    loadDefaultConfig();
+
+    lastFrameTime = juce::Time::getMillisecondCounterHiRes() / 1000.0;
 
     juce::gl::glGenTextures(1, &textureId);
     juce::gl::glBindTexture(juce::gl::GL_TEXTURE_2D, textureId);
@@ -74,21 +124,74 @@ void DoomViewport::newOpenGLContextCreated()
 
 void DoomViewport::renderOpenGL()
 {
+    // Timing
+    double now = juce::Time::getMillisecondCounterHiRes() / 1000.0;
+    float deltaTime = static_cast<float>(now - lastFrameTime);
+    lastFrameTime = now;
+    deltaTime = std::min(deltaTime, 0.1f); // cap to avoid huge jumps
+
     // Pull audio from the signal bus and feed to analyzer
     int pulled = signalBus.pullAudioSamples(pullBuffer.data(),
                                              static_cast<int>(pullBuffer.size()));
     if (pulled > 0)
         analyzer.pushSamples(pullBuffer.data(), pulled);
 
+    // Evaluate routes (if config loaded) or build default parameter map
+    router.evaluate(analyzer, signalBus, deltaTime);
+
+    // Build the parameter map: use router output, then overlay direct audio values
+    auto params = router.getParameters();
+
+    // Always inject direct audio analysis so scenes react even without YAML config
+    float rms = analyzer.getRMSLevel();
+    bool onset = analyzer.getOnset();
+    const float* bands = analyzer.getBandRMS();
+    const float* envelope = analyzer.getBandEnvelope();
+
+    // Use RMS directly (0.0-1.0 range for typical audio) — don't over-amplify
+    // so that dynamics are preserved (mastered music RMS is ~0.2-0.5)
+    if (params.find("sector_light.all") == params.end())
+        params["sector_light.all"] = std::min(1.0f, rms * 2.0f);
+    if (params.find("monster_spawn") == params.end())
+        params["monster_spawn"] = onset ? 1.0f : 0.0f;
+    if (params.find("camera_shake") == params.end())
+        params["camera_shake"] = std::min(1.0f, rms);
+    if (params.find("player_speed") == params.end())
+        params["player_speed"] = std::min(1.0f, rms * 2.0f);
+
+    // Per-band amplitudes for spectrum scene
+    for (int i = 0; i < analyzer.getNumBands() && i < 16; ++i)
+    {
+        std::string key = "band." + std::to_string(i) + ".amplitude";
+        if (params.find(key) == params.end())
+            params[key] = envelope[i];
+    }
+
+    // MIDI velocity → light boost
+    float vel = static_cast<float>(signalBus.getLastVelocity()) / 127.0f;
+    if (vel > params["sector_light.all"])
+        params["sector_light.all"] = vel;
+
+    // Check for scene switch via MIDI Program Change
+    int pc = signalBus.getProgramChange();
+    if (pc != lastProgramChange && engine && engine->isMapLoaded())
+    {
+        lastProgramChange = pc;
+        sceneManager.switchTo(pc % sceneManager.getNumScenes(), *engine);
+    }
+
     juce::gl::glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
 
-    if (engine && engine->isMapLoaded())
+    const uint8_t* rgba = nullptr;
+
+    if (engine && engine->isMapLoaded() && sceneManager.getNumScenes() > 0)
     {
-        engine->tick();
+        rgba = sceneManager.updateAndRender(*engine, params, deltaTime);
+    }
 
-        const uint8_t* rgba = engine->renderFrame();
-
+    if (rgba)
+    {
         juce::gl::glBindTexture(juce::gl::GL_TEXTURE_2D, textureId);
         juce::gl::glTexSubImage2D(juce::gl::GL_TEXTURE_2D, 0, 0, 0,
                                   kWidth, kHeight,
@@ -96,6 +199,7 @@ void DoomViewport::renderOpenGL()
                                   rgba);
     }
 
+    // Draw the texture
     juce::gl::glEnable(juce::gl::GL_TEXTURE_2D);
     juce::gl::glBindTexture(juce::gl::GL_TEXTURE_2D, textureId);
 

@@ -126,6 +126,27 @@ void doom_set_flat_data(const char* flat_name, const uint8_t* pixels);
 // Get player spawn position (set after doom_load_map).
 void doom_get_player_pos(int32_t* x, int32_t* y, int32_t* z, uint32_t* angle);
 
+// Move the player with collision detection. dx, dy are fixed-point deltas.
+// Returns 1 if the move succeeded, 0 if blocked by a wall.
+int doom_move_player(int32_t dx, int32_t dy);
+
+// Fire the player's current weapon.
+void doom_fire_weapon(void);
+
+// Get the position of a tracked thing. Returns 0 if invalid handle.
+int doom_get_thing_position(int handle, int32_t* x, int32_t* y);
+
+// --- Player State ---
+
+// Enable/disable god mode (invulnerability). Call after doom_load_map.
+void doom_set_god_mode(int enabled);
+
+// Check if player is dead.
+int doom_is_player_dead(void);
+
+// Respawn the player at the start position. Call when player dies.
+void doom_respawn_player(void);
+
 // --- Utility ---
 
 // Convert Doom fixed-point to float and back.

@@ -105,6 +105,36 @@ void DoomEngine::setThingAngle(int handle, uint32_t angle)
     doom_set_thing_angle(handle, angle);
 }
 
+bool DoomEngine::movePlayer(int32_t dx, int32_t dy)
+{
+    return doom_move_player(dx, dy) != 0;
+}
+
+void DoomEngine::fireWeapon()
+{
+    doom_fire_weapon();
+}
+
+bool DoomEngine::getThingPosition(int handle, int32_t& x, int32_t& y)
+{
+    return doom_get_thing_position(handle, &x, &y) != 0;
+}
+
+void DoomEngine::setGodMode(bool enabled)
+{
+    doom_set_god_mode(enabled ? 1 : 0);
+}
+
+bool DoomEngine::isPlayerDead()
+{
+    return doom_is_player_dead() != 0;
+}
+
+void DoomEngine::respawnPlayer()
+{
+    doom_respawn_player();
+}
+
 void DoomEngine::setSectorLight(int sectorId, int level)
 {
     doom_set_sector_light(sectorId, level);

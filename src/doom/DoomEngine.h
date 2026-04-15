@@ -30,6 +30,15 @@ public:
     void setCamera(int32_t x, int32_t y, int32_t z, uint32_t angle);
     void getPlayerPos(int32_t& x, int32_t& y, int32_t& z, uint32_t& angle);
 
+    // Collision-checked movement. Returns true if the move succeeded.
+    bool movePlayer(int32_t dx, int32_t dy);
+
+    // Fire the player's weapon.
+    void fireWeapon();
+
+    // Get position of a tracked thing. Returns false if invalid.
+    bool getThingPosition(int handle, int32_t& x, int32_t& y);
+
     // Thing management
     int spawnThing(int32_t x, int32_t y, int typeId);
     void removeThing(int handle);
@@ -39,6 +48,11 @@ public:
     // Sector manipulation
     void setSectorLight(int sectorId, int level);
     int getSectorLight(int sectorId);
+
+    // Player state
+    void setGodMode(bool enabled);
+    bool isPlayerDead();
+    void respawnPlayer();
 
     // Query
     bool isInitialized() const { return initialized; }

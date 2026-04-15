@@ -123,10 +123,13 @@ int doom_init(const char* wad_path)
     players[0].readyweapon = wp_pistol;
     players[0].weaponowned[wp_fist] = true;
     players[0].weaponowned[wp_pistol] = true;
-    players[0].ammo[am_clip] = 50;
-    players[0].maxammo[am_clip] = 200;
-    players[0].maxammo[am_shell] = 50;
-    players[0].maxammo[am_cell] = 300;
+    players[0].ammo[am_clip] = 9999;
+    players[0].ammo[am_shell] = 9999;
+    players[0].ammo[am_cell] = 9999;
+    players[0].ammo[am_misl] = 9999;
+    players[0].maxammo[am_clip] = 9999;
+    players[0].maxammo[am_shell] = 9999;
+    players[0].maxammo[am_cell] = 9999;
     players[0].maxammo[am_misl] = 50;
 
     // Load the initial palette from PLAYPAL
@@ -241,6 +244,10 @@ int doom_spawn_thing(int32_t x, int32_t y, int type_id)
     mobj_t* mo = P_SpawnMobj(x, y, ONFLOORZ, (mobjtype_t)type_id);
     if (mo == NULL)
         return -1;
+
+    // Remove MF_SOLID so spawned things don't block player movement.
+    // They're visual props for the visualizer, not gameplay obstacles.
+    mo->flags &= ~MF_SOLID;
 
     tracked_things[handle] = mo;
     if (handle >= num_tracked)
@@ -364,6 +371,82 @@ int doom_sector_is_outdoor(int sector_id)
     // The sky flat number is stored in skyflatnum
     extern int skyflatnum;
     return sectors[sector_id].ceilingpic == skyflatnum;
+}
+
+void doom_fire_weapon(void)
+{
+    if (!map_loaded || !players[0].mo)
+        return;
+
+    extern void P_FireWeapon(player_t* player);
+    P_FireWeapon(&players[0]);
+}
+
+int doom_get_thing_position(int handle, int32_t* x, int32_t* y)
+{
+    if (handle < 0 || handle >= MAX_TRACKED_THINGS)
+        return 0;
+    if (tracked_things[handle] == NULL)
+        return 0;
+
+    if (x) *x = tracked_things[handle]->x;
+    if (y) *y = tracked_things[handle]->y;
+    return 1;
+}
+
+int doom_move_player(int32_t dx, int32_t dy)
+{
+    if (!map_loaded || !players[0].mo)
+        return 0;
+
+    mobj_t* mo = players[0].mo;
+    fixed_t newx = mo->x + dx;
+    fixed_t newy = mo->y + dy;
+
+    // Use Doom's collision-checked movement
+    extern boolean P_TryMove(mobj_t* thing, fixed_t x, fixed_t y);
+    if (P_TryMove(mo, newx, newy))
+    {
+        // Update viewz after successful move
+        players[0].viewz = mo->z + players[0].viewheight;
+        return 1;
+    }
+    return 0;
+}
+
+void doom_set_god_mode(int enabled)
+{
+    if (!map_loaded)
+        return;
+
+    if (enabled)
+        players[0].cheats |= CF_GODMODE;
+    else
+        players[0].cheats &= ~CF_GODMODE;
+}
+
+int doom_is_player_dead(void)
+{
+    if (!map_loaded || !players[0].mo)
+        return 0;
+
+    return players[0].playerstate == PST_DEAD;
+}
+
+void doom_respawn_player(void)
+{
+    if (!map_loaded)
+        return;
+
+    // Reset player state
+    players[0].playerstate = PST_LIVE;
+    players[0].health = 100;
+    players[0].mo->health = 100;
+
+    // Reset view height (gets messed up on death)
+    players[0].viewheight = 41 * FRACUNIT;
+    players[0].deltaviewheight = 0;
+    players[0].viewz = players[0].mo->z + 41 * FRACUNIT;
 }
 
 void doom_tick(void)
