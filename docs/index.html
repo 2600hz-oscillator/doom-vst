@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoomViz - Doom Music Visualizer VST</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1 {
+            color: #ff4444;
+            font-size: 3em;
+            text-align: center;
+            margin: 40px 0 10px;
+            text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #ff6644;
+            margin: 30px 0 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        h3 { color: #ffaa44; margin: 20px 0 10px; }
+        a { color: #ff6644; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .screenshots {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .screenshots figure {
+            text-align: center;
+        }
+        .screenshots img {
+            image-rendering: pixelated;
+            width: 400px;
+            height: 250px;
+            border: 2px solid #444;
+        }
+        .screenshots figcaption {
+            color: #888;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+        .scene-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .scene-card {
+            background: #222;
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .scene-card h3 { margin-top: 0; }
+        .scene-card .tag {
+            display: inline-block;
+            background: #ff4444;
+            color: #000;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        code {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        pre {
+            background: #222;
+            border: 1px solid #333;
+            padding: 15px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .arch-diagram {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre;
+            border-radius: 4px;
+        }
+        footer {
+            text-align: center;
+            color: #555;
+            margin-top: 60px;
+            padding: 20px;
+            border-top: 1px solid #333;
+        }
+        @media (max-width: 700px) {
+            .scene-grid { grid-template-columns: 1fr; }
+            .screenshots img { width: 100%; height: auto; }
+            h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DOOMVIZ</h1>
+        <p class="subtitle">A VST3/AU music visualizer powered by the Doom (1994) renderer</p>
+
+        <div class="screenshots">
+            <figure>
+                <img src="images/e1m1_test.png" alt="E1M1 starting view">
+                <figcaption>E1M1 starting view</figcaption>
+            </figure>
+            <figure>
+                <img src="images/e1m1_with_imp.png" alt="E1M1 with spawned imps">
+                <figcaption>E1M1 with spawned imps</figcaption>
+            </figure>
+        </div>
+
+        <h2>What Is This?</h2>
+        <p>DoomViz is an open-source VST3/AU plugin that embeds the Doom (1994) software renderer
+        and drives it from real-time audio and MIDI input. Load it as an effect in your DAW, route
+        audio through it, and watch E1M1 come alive with your music.</p>
+        <p>Audio passes through unchanged &mdash; DoomViz is purely visual.</p>
+
+        <h2>Visualizer Modes</h2>
+        <div class="scene-grid">
+            <div class="scene-card">
+                <span class="tag">PC 0</span>
+                <h3>Kill Room</h3>
+                <p>Auto-navigates E1M1 with collision detection. Audio onsets spawn monsters.
+                Player faces and shoots nearby enemies when audio is playing.
+                Sector lighting pulses with RMS level.</p>
+            </div>
+            <div class="scene-card">
+                <span class="tag">PC 1</span>
+                <h3>Sprite Spectrum</h3>
+                <p>2D frequency visualizer using Doom palette colors. 8 bands rendered as
+                colored bars, scaled vertically by amplitude. Dark background with
+                real-time audio response.</p>
+            </div>
+            <div class="scene-card">
+                <span class="tag">PC 2</span>
+                <h3>Analyzer Room</h3>
+                <p>Auto-navigates E1M1 while the FFT spectrum is rendered onto the NUKAGE1
+                floor texture as a real-time bar graph with green-to-red gradient.</p>
+            </div>
+        </div>
+        <p>Switch scenes by sending MIDI Program Change (0, 1, or 2) to the plugin.</p>
+
+        <h2>Signal Flow</h2>
+        <div class="arch-diagram">Audio In &rarr; FFT / RMS / Onset &rarr; Signal Router &rarr; Scene Controller &rarr; Doom Renderer &rarr; OpenGL
+MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                                                    &darr;
+                                   YAML Config                                             Plugin Window</div>
+
+        <h2>Audio Analysis</h2>
+        <ul>
+            <li><strong>FFT</strong> &mdash; 2048-sample window, Hann windowed, 16 log-spaced frequency bands (20Hz&ndash;20kHz)</li>
+            <li><strong>RMS</strong> &mdash; Time-domain level with envelope follower (configurable attack/release)</li>
+            <li><strong>Onset detection</strong> &mdash; Spectral flux transient trigger</li>
+            <li><strong>MIDI</strong> &mdash; Note velocity, CC values, program change, MIDI clock</li>
+        </ul>
+
+        <h2>YAML Routing</h2>
+        <p>Signal routing is configured via YAML. Each input channel defines a source (audio band, onset, MIDI CC, etc.)
+        with gain/offset/smoothing. Routes map inputs to scene parameters with scale, offset, and blend modes
+        (replace, add, multiply, max).</p>
+<pre>inputs:
+  kick_env:
+    source: audio
+    mode: band_rms
+    band: [20, 200]
+    smoothing: 0.05
+    gain: 2.0
+
+routes:
+  - from: kick_env
+    to: sector_light.all
+    scale: 1.0</pre>
+
+        <h2>Building</h2>
+        <p>Requires macOS with Apple Clang and <a href="https://flox.dev/">Flox</a> for dependency management.</p>
+<pre>git clone --recursive &lt;repo-url&gt;
+cd doom_viz
+flox activate
+
+mkdir -p build && cd build
+cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang \
+         -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+cd ..
+
+# Build and install VST3
+flox activate -- cmake --build build -j1 --target DoomViz_VST3
+cp -R build/DoomViz_artefacts/VST3/DoomViz.vst3 \
+      ~/Library/Audio/Plug-Ins/VST3/
+codesign --force --deep --sign - \
+      ~/Library/Audio/Plug-Ins/VST3/DoomViz.vst3</pre>
+
+        <h2>Tech Stack</h2>
+        <ul>
+            <li><strong>Doom renderer</strong> &mdash; Stripped <a href="https://github.com/id-Software/DOOM">linuxdoom-1.10</a>, ported to 64-bit macOS</li>
+            <li><strong>Plugin framework</strong> &mdash; <a href="https://juce.com/">JUCE</a> (VST3, AU, Standalone)</li>
+            <li><strong>Config</strong> &mdash; <a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></li>
+            <li><strong>Rendering</strong> &mdash; 320&times;200 indexed framebuffer &rarr; RGBA &rarr; OpenGL texture (nearest-neighbor)</li>
+        </ul>
+
+        <footer>
+            <p>Open source &amp; noncommercial. Doom source code is GPL. DOOM1.WAD (shareware) is freely redistributable.</p>
+        </footer>
+    </div>
+</body>
+</html>
