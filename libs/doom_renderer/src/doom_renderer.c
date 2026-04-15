@@ -106,6 +106,9 @@ int doom_init(const char* wad_path)
     // Initialize renderer (loads textures, colormaps, sprites, etc.)
     R_Init();
 
+    // Initialize game data (switch textures, animated flats, sprites)
+    P_Init();
+
     // Set up rendering viewport (full screen, normal detail)
     R_SetViewSize(screenblocks, detailLevel);
     R_ExecuteSetViewSize();

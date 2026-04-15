@@ -1,6 +1,9 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "audio/SignalBus.h"
+#include "audio/MidiHandler.h"
+#include <memory>
 
 class DoomVizProcessor : public juce::AudioProcessor
 {
@@ -31,6 +34,15 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    // Shared signal bus — render thread reads from this
+    SignalBus& getSignalBus() { return signalBus; }
+    double getCurrentSampleRate() const { return currentSampleRate; }
+
 private:
+    SignalBus signalBus;
+    MidiHandler midiHandler;
+    std::vector<float> monoBuffer;
+    double currentSampleRate = 44100.0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomVizProcessor)
 };

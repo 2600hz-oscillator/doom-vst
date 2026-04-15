@@ -27,6 +27,10 @@ target_sources(DoomViz PRIVATE
     src/PluginProcessor.cpp
     src/PluginEditor.cpp
     src/DoomViewport.cpp
+    src/doom/DoomEngine.cpp
+    src/audio/SignalBus.cpp
+    src/audio/AudioAnalyzer.cpp
+    src/audio/MidiHandler.cpp
 )
 
 target_include_directories(DoomViz PRIVATE
@@ -46,8 +50,24 @@ target_link_libraries(DoomViz PRIVATE
     juce::juce_audio_utils
     juce::juce_gui_basics
     juce::juce_opengl
+    juce::juce_dsp
     doom_renderer
 )
+
+# Copy DOOM1.WAD into each plugin bundle's Resources after build
+set(WAD_SRC "${CMAKE_SOURCE_DIR}/resources/DOOM1.WAD")
+foreach(target DoomViz_VST3 DoomViz_AU DoomViz_Standalone)
+    if(TARGET ${target})
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_BUNDLE_DIR:${target}>/Contents/Resources"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${WAD_SRC}"
+                "$<TARGET_BUNDLE_DIR:${target}>/Contents/Resources/DOOM1.WAD"
+            COMMENT "Bundling DOOM1.WAD into ${target}"
+        )
+    endif()
+endforeach()
 
 # --- Test harness (standalone C program, not the plugin) ---
 add_executable(render_test test/render_test.c)
