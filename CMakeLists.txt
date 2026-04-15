@@ -7,8 +7,13 @@ set(CMAKE_CXX_STANDARD 17)
 # Build the Doom renderer library
 add_subdirectory(libs/doom_renderer)
 
-# --- JUCE Plugin ---
+# --- Dependencies ---
 add_subdirectory(extern/JUCE)
+
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/yaml-cpp)
 
 juce_add_plugin(DoomViz
     COMPANY_NAME "DoomViz"
@@ -31,11 +36,14 @@ target_sources(DoomViz PRIVATE
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
     src/audio/MidiHandler.cpp
+    src/routing/RouteConfig.cpp
+    src/routing/SignalRouter.cpp
 )
 
 target_include_directories(DoomViz PRIVATE
     src
     libs/doom_renderer/include
+    extern/yaml-cpp/include
 )
 
 target_compile_definitions(DoomViz PUBLIC
@@ -52,6 +60,7 @@ target_link_libraries(DoomViz PRIVATE
     juce::juce_opengl
     juce::juce_dsp
     doom_renderer
+    yaml-cpp
 )
 
 # Copy DOOM1.WAD into each plugin bundle's Resources after build

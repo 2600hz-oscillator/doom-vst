@@ -1,0 +1,51 @@
+scene: kill_room
+
+inputs:
+  kick_env:
+    source: audio
+    mode: band_rms
+    band: [20, 200]
+    smoothing: 0.05
+    gain: 2.0
+
+  snare_onset:
+    source: audio
+    mode: onset_detect
+    band: [2000, 8000]
+
+  overall_level:
+    source: audio
+    mode: full_rms
+    smoothing: 0.1
+    gain: 1.5
+
+  midi_velocity:
+    source: midi
+    mode: note_velocity
+
+  midi_cc1:
+    source: midi
+    mode: cc
+    cc_number: 1
+
+routes:
+  - from: kick_env
+    to: sector_light.all
+    scale: 1.0
+
+  - from: snare_onset
+    to: monster_spawn
+    scale: 1.0
+
+  - from: overall_level
+    to: camera_shake
+    scale: 0.3
+
+  - from: midi_velocity
+    to: sector_light.all
+    scale: 0.8
+    blend: max
+
+  - from: midi_cc1
+    to: palette_flash
+    scale: 1.0
