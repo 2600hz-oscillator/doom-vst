@@ -135,6 +135,17 @@ void DoomEngine::respawnPlayer()
     doom_respawn_player();
 }
 
+void DoomEngine::setWallTextureData(const char* texName, const uint8_t* pixels,
+                                     int* outWidth, int* outHeight)
+{
+    doom_set_wall_texture_data(texName, pixels, outWidth, outHeight);
+}
+
+void DoomEngine::giveWeapon(int weaponId)
+{
+    doom_give_weapon(weaponId);
+}
+
 void DoomEngine::setSectorLight(int sectorId, int level)
 {
     doom_set_sector_light(sectorId, level);

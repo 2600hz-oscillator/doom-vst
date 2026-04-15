@@ -104,7 +104,7 @@ void DoomViewport::newOpenGLContextCreated()
     // Set up scenes
     sceneManager.addScene(std::make_unique<KillRoomScene>());
     sceneManager.addScene(std::make_unique<SpriteSpectrumScene>());
-    sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer));
+    sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
 
     if (engine->isMapLoaded())
         sceneManager.init(*engine);

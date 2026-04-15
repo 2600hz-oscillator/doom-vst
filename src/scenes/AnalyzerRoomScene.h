@@ -6,13 +6,17 @@
 #include <array>
 
 class AudioAnalyzer;
+class SignalBus;
 
-// Scene C: Auto-navigating E1M1 with an FFT spectrum rendered onto a floor texture.
-// The player auto-walks while the analyzer output is drawn to a Doom flat.
+// Scene C: Inside the Doom engine, holding the BFG9000.
+// Camera rotates in place at BPM rate. FFT spectrum is injected
+// onto a wall texture so it appears on the walls around the player.
 class AnalyzerRoomScene : public Scene
 {
 public:
-    AnalyzerRoomScene(const AudioAnalyzer& analyzer);
+    static constexpr int kNumBars = 8;
+
+    AnalyzerRoomScene(const AudioAnalyzer& analyzer, const SignalBus& bus);
 
     void init(DoomEngine& engine) override;
     void update(DoomEngine& engine, const ParameterMap& params, float deltaTime) override;
@@ -22,17 +26,35 @@ public:
 
 private:
     const AudioAnalyzer& analyzer;
+    const SignalBus& signalBus;
 
-    // Camera auto-navigation
+    // Camera
     int32_t camX = 0, camY = 0, camZ = 0;
     uint32_t camAngle = 0;
-    float turnTimer = 0.0f;
-    float turnDirection = 1.0f;
-    float blockedTimer = 0.0f;
 
-    // FFT texture data (64x64 indexed pixels for a Doom flat)
-    std::array<uint8_t, 64 * 64> flatPixels {};
+    // Rotation
+    float bpm = 120.0f;
+    int lastClockCount = 0;
 
-    void updateCamera(DoomEngine& engine, const ParameterMap& params, float deltaTime);
-    void renderFFTToFlat();
+    // Wall texture buffer (column-major, allocated after getting texture dims)
+    std::vector<uint8_t> texPixels;
+    int texWidth = 0, texHeight = 0;
+    bool texInitialized = false;
+
+    // The wall texture we replace
+    static constexpr const char* kTargetTexture = "STARTAN3";
+
+    // Bar colors as Doom palette indices (approximate)
+    static constexpr uint8_t kBarPalette[kNumBars] = {
+        176, // red
+        208, // orange
+        160, // yellow
+        112, // green
+        192, // cyan
+        200, // blue
+        248, // purple
+        252, // magenta/pink
+    };
+
+    void renderFFTToTexture();
 };

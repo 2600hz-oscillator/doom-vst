@@ -6,8 +6,7 @@
 #include <array>
 
 // Scene B: 2D sprite spectrum visualizer.
-// Doom sprites are drawn as frequency band bars, scaled by amplitude.
-// Does not use the 3D Doom renderer — renders directly to an RGBA buffer.
+// Doom sprites (imps etc.) are drawn as frequency band columns, scaled by amplitude.
 class SpriteSpectrumScene : public Scene
 {
 public:
@@ -30,23 +29,15 @@ private:
     std::array<float, kNumDisplayBands> bandAmplitudes {};
     float backgroundBrightness = 0.0f;
 
-    // Sprite IDs to use for each band (spritenum_t values)
-    static constexpr int kBandSprites[kNumDisplayBands] = {
-        0,   // SPR_TROO (Imp)
-        28,  // SPR_PLAY (Player)
-        0,   // SPR_TROO
-        28,  // SPR_PLAY
-        0,   // SPR_TROO
-        28,  // SPR_PLAY
-        0,   // SPR_TROO
-        28,  // SPR_PLAY
-    };
-
     // Doom palette for indexed-to-RGB conversion
     uint8_t palette[768] = {};
     bool paletteLoaded = false;
 
+    // Sprite IDs: use imp (SPR_TROO=0) for all bands
+    static constexpr int kSpriteId = 0; // SPR_TROO
+
     void loadPalette(DoomEngine& engine);
-    void drawSprite(int spriteId, int frame, int centerX, int baseY, float scale);
+    void clearBuffer();
+    void drawPatchSprite(const uint8_t* patchData, int centerX, int baseY, float scale);
     void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 };

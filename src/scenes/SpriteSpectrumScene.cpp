@@ -21,7 +21,6 @@ void SpriteSpectrumScene::loadPalette(DoomEngine& engine)
 {
     if (!paletteLoaded && engine.isInitialized())
     {
-        // Render one frame to ensure palette is loaded
         if (engine.isMapLoaded())
         {
             doom_frame_t* frame = doom_render_frame();
@@ -40,7 +39,6 @@ void SpriteSpectrumScene::update(DoomEngine& engine, const ParameterMap& params,
     (void)engine;
     (void)deltaTime;
 
-    // Read per-band amplitudes from params
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
         std::string key = "band." + std::to_string(i) + ".amplitude";
@@ -49,11 +47,10 @@ void SpriteSpectrumScene::update(DoomEngine& engine, const ParameterMap& params,
             bandAmplitudes[static_cast<size_t>(i)] = it->second;
     }
 
-    // If no explicit band routing, use sector_light.all as overall level
+    // Fallback: distribute overall level across bands
     auto lit = params.find("sector_light.all");
     if (lit != params.end())
     {
-        // Distribute across bands with some variation
         for (int i = 0; i < kNumDisplayBands; ++i)
         {
             if (bandAmplitudes[static_cast<size_t>(i)] == 0.0f)
@@ -79,42 +76,84 @@ void SpriteSpectrumScene::setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b
     rgbaBuffer[static_cast<size_t>(idx + 3)] = 255;
 }
 
-void SpriteSpectrumScene::drawSprite(int spriteId, int frame, int centerX, int baseY,
-                                      float scale)
+void SpriteSpectrumScene::clearBuffer()
 {
-    doom_sprite_t spr = doom_get_sprite(spriteId, frame, 0);
-    if (spr.patch_data == nullptr || spr.width == 0 || spr.height == 0)
-        return;
-
-    // Scale the sprite height
-    int scaledHeight = std::max(1, static_cast<int>(static_cast<float>(spr.height) * scale));
-    int scaledWidth = std::max(1, static_cast<int>(static_cast<float>(spr.width) * scale));
-
-    int drawX = centerX - scaledWidth / 2;
-    int drawY = baseY - scaledHeight;
-
-    // Simple nearest-neighbor scaling of the sprite
-    // Doom patches are column-major with a specific format, but we'll use a simplified approach
-    // Just draw a colored rectangle proportional to the sprite with the sprite's dominant color
-    // (Full patch decoding is complex — we'll use a solid block with palette color for MVP)
-
-    // Use a color from the Doom palette based on sprite ID
-    int palIdx = (spriteId * 16 + 80) % 256;
-    uint8_t r = palette[palIdx * 3 + 0];
-    uint8_t g = palette[palIdx * 3 + 1];
-    uint8_t b = palette[palIdx * 3 + 2];
-
-    // Draw filled rectangle as sprite placeholder
-    for (int py = drawY; py < drawY + scaledHeight; ++py)
+    uint8_t bg = static_cast<uint8_t>(backgroundBrightness * 30.0f);
+    for (int i = 0; i < kWidth * kHeight; ++i)
     {
-        for (int px = drawX; px < drawX + scaledWidth; ++px)
+        int idx = i * 4;
+        rgbaBuffer[static_cast<size_t>(idx + 0)] = bg;
+        rgbaBuffer[static_cast<size_t>(idx + 1)] = bg;
+        rgbaBuffer[static_cast<size_t>(idx + 2)] = static_cast<uint8_t>(bg + bg / 4);
+        rgbaBuffer[static_cast<size_t>(idx + 3)] = 255;
+    }
+}
+
+// Decode a Doom patch_t and draw it scaled at the given position.
+// patchData points to the raw patch_t lump data.
+void SpriteSpectrumScene::drawPatchSprite(const uint8_t* patchData, int centerX,
+                                           int baseY, float scale)
+{
+    if (!patchData || !paletteLoaded || scale < 0.01f) return;
+
+    // Read patch header (little-endian)
+    int16_t width = static_cast<int16_t>(patchData[0] | (patchData[1] << 8));
+    int16_t height = static_cast<int16_t>(patchData[2] | (patchData[3] << 8));
+    int16_t leftoff = static_cast<int16_t>(patchData[4] | (patchData[5] << 8));
+    (void)leftoff;
+
+    if (width <= 0 || height <= 0 || width > 256 || height > 256) return;
+
+    int scaledW = std::max(1, static_cast<int>(static_cast<float>(width) * scale));
+    int scaledH = std::max(1, static_cast<int>(static_cast<float>(height) * scale));
+
+    int drawLeft = centerX - scaledW / 2;
+    int drawTop = baseY - scaledH;
+
+    // Column offsets start at byte 8 (after 4 shorts)
+    const uint8_t* colOffsPtr = patchData + 8;
+
+    for (int col = 0; col < width; ++col)
+    {
+        // Read column offset (4 bytes, little-endian)
+        uint32_t colOfs = static_cast<uint32_t>(colOffsPtr[col * 4])
+                        | (static_cast<uint32_t>(colOffsPtr[col * 4 + 1]) << 8)
+                        | (static_cast<uint32_t>(colOffsPtr[col * 4 + 2]) << 16)
+                        | (static_cast<uint32_t>(colOffsPtr[col * 4 + 3]) << 24);
+
+        const uint8_t* colData = patchData + colOfs;
+
+        // Scaled X position for this column
+        int sx = drawLeft + static_cast<int>(static_cast<float>(col) * scale);
+        int sxEnd = drawLeft + static_cast<int>(static_cast<float>(col + 1) * scale);
+
+        // Parse posts
+        while (*colData != 0xFF)
         {
-            // Add some shading for depth
-            float shade = 1.0f - 0.3f * static_cast<float>(py - drawY) / static_cast<float>(scaledHeight);
-            setPixel(px, py,
-                     static_cast<uint8_t>(static_cast<float>(r) * shade),
-                     static_cast<uint8_t>(static_cast<float>(g) * shade),
-                     static_cast<uint8_t>(static_cast<float>(b) * shade));
+            uint8_t topdelta = colData[0];
+            uint8_t length = colData[1];
+            // colData[2] is padding
+            const uint8_t* pixels = colData + 3;
+
+            for (int row = 0; row < length; ++row)
+            {
+                uint8_t palIdx = pixels[row];
+                uint8_t r = palette[palIdx * 3 + 0];
+                uint8_t g = palette[palIdx * 3 + 1];
+                uint8_t b = palette[palIdx * 3 + 2];
+
+                int srcY = topdelta + row;
+                int sy = drawTop + static_cast<int>(static_cast<float>(srcY) * scale);
+                int syEnd = drawTop + static_cast<int>(static_cast<float>(srcY + 1) * scale);
+
+                // Fill scaled pixel block
+                for (int py = sy; py < syEnd; ++py)
+                    for (int px = sx; px < sxEnd; ++px)
+                        setPixel(px, py, r, g, b);
+            }
+
+            // Skip: topdelta(1) + length(1) + pad(1) + pixels(length) + pad(1)
+            colData += 4 + length;
         }
     }
 }
@@ -122,21 +161,10 @@ void SpriteSpectrumScene::drawSprite(int spriteId, int frame, int centerX, int b
 const uint8_t* SpriteSpectrumScene::render(DoomEngine& engine)
 {
     (void)engine;
+    clearBuffer();
 
-    // Clear to dark background
-    uint8_t bg = static_cast<uint8_t>(backgroundBrightness * 30.0f);
-    for (int i = 0; i < kWidth * kHeight; ++i)
-    {
-        int idx = i * 4;
-        rgbaBuffer[static_cast<size_t>(idx + 0)] = bg;
-        rgbaBuffer[static_cast<size_t>(idx + 1)] = bg;
-        rgbaBuffer[static_cast<size_t>(idx + 2)] = static_cast<uint8_t>(bg + bg / 4); // slight blue tint
-        rgbaBuffer[static_cast<size_t>(idx + 3)] = 255;
-    }
-
-    // Draw each band as a sprite
     int bandWidth = kWidth / kNumDisplayBands;
-    int baseY = kHeight - 10; // bottom margin
+    int baseY = kHeight - 10;
 
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
@@ -144,9 +172,14 @@ const uint8_t* SpriteSpectrumScene::render(DoomEngine& engine)
         if (amp < 0.01f) continue;
 
         int centerX = bandWidth / 2 + i * bandWidth;
-        float scale = amp * 3.0f; // scale sprite up to 3x based on amplitude
 
-        drawSprite(kBandSprites[i], 0, centerX, baseY, scale);
+        // Get the imp sprite (frame 0, rotation 0)
+        doom_sprite_t spr = doom_get_sprite(kSpriteId, 0, 0);
+        if (spr.patch_data != nullptr)
+        {
+            float scale = 0.5f + amp * 2.5f; // scale from 0.5x to 3x
+            drawPatchSprite(spr.patch_data, centerX, baseY, scale);
+        }
     }
 
     return rgbaBuffer.data();

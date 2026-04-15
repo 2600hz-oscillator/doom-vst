@@ -526,15 +526,88 @@ void doom_set_flat_data(const char* flat_name, const uint8_t* pixels)
     if (!initialized || flat_name == NULL || pixels == NULL)
         return;
 
-    // Find the flat lump
     int lump = W_CheckNumForName(flat_name);
     if (lump < 0)
         return;
 
-    // Get the cached flat data and overwrite it
-    // Flats are 64x64 = 4096 bytes of raw indexed pixels
     byte* flat = W_CacheLumpNum(lump, PU_STATIC);
     if (flat != NULL) {
         memcpy(flat, pixels, 64 * 64);
     }
+}
+
+// Externs from r_data.c
+extern byte**   texturecomposite;
+extern int*     texturecompositesize;
+extern short**  texturecolumnlump;
+extern unsigned short** texturecolumnofs;
+extern int      numtextures;
+extern int      R_CheckTextureNumForName(char* name);
+
+// Forward declare texture_t (defined in r_data.c)
+typedef struct {
+    char  name[8];
+    short width;
+    short height;
+    short patchcount;
+    // patches follow but we only need width/height
+} dviz_texture_t;
+extern dviz_texture_t** textures;
+
+void doom_set_wall_texture_data(const char* tex_name, const uint8_t* pixels,
+                                 int* out_width, int* out_height)
+{
+    if (!initialized || tex_name == NULL)
+        return;
+
+    int texnum = R_CheckTextureNumForName((char*)tex_name);
+    if (texnum < 0 || texnum >= numtextures)
+        return;
+
+    dviz_texture_t* tex = textures[texnum];
+    int w = tex->width;
+    int h = tex->height;
+
+    if (out_width) *out_width = w;
+    if (out_height) *out_height = h;
+
+    // Query-only mode (pixels == NULL)
+    if (pixels == NULL)
+        return;
+
+    // Ensure composite is allocated
+    if (!texturecomposite[texnum])
+    {
+        // Allocate and set up column offsets for column-major layout
+        texturecompositesize[texnum] = w * h;
+        texturecomposite[texnum] = Z_Malloc(w * h, PU_STATIC, &texturecomposite[texnum]);
+    }
+
+    // Copy column-major pixel data
+    memcpy(texturecomposite[texnum], pixels, w * h);
+
+    // Force all columns to use composite (not individual lumps)
+    for (int col = 0; col < w; col++)
+    {
+        texturecolumnlump[texnum][col] = 0;  // 0 = use composite
+        texturecolumnofs[texnum][col] = col * h;
+    }
+}
+
+void doom_give_weapon(int weapon_id)
+{
+    if (!map_loaded)
+        return;
+    if (weapon_id < 0 || weapon_id >= NUMWEAPONS)
+        return;
+
+    players[0].weaponowned[weapon_id] = true;
+    players[0].readyweapon = (weapontype_t)weapon_id;
+    players[0].pendingweapon = (weapontype_t)weapon_id;
+
+    // Ensure ammo
+    players[0].ammo[am_clip] = 9999;
+    players[0].ammo[am_shell] = 9999;
+    players[0].ammo[am_cell] = 9999;
+    players[0].ammo[am_misl] = 9999;
 }

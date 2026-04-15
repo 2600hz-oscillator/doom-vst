@@ -49,6 +49,13 @@ public:
     void setSectorLight(int sectorId, int level);
     int getSectorLight(int sectorId);
 
+    // Texture manipulation
+    void setWallTextureData(const char* texName, const uint8_t* pixels,
+                            int* outWidth = nullptr, int* outHeight = nullptr);
+
+    // Give player a weapon (weapontype_t value)
+    void giveWeapon(int weaponId);
+
     // Player state
     void setGodMode(bool enabled);
     bool isPlayerDead();

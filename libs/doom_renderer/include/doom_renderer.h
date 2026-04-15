@@ -121,6 +121,16 @@ doom_sprite_t doom_get_sprite(int sprite_id, int frame, int rotation);
 // flat_name is the lump name (e.g., "FLAT1").
 void doom_set_flat_data(const char* flat_name, const uint8_t* pixels);
 
+// Replace a wall texture's composite data with custom pixel data.
+// pixels is column-major indexed-color (width * height bytes).
+// tex_name is the texture name (e.g., "STARTAN3").
+// Returns the texture dimensions via out params (can be NULL).
+void doom_set_wall_texture_data(const char* tex_name, const uint8_t* pixels,
+                                 int* out_width, int* out_height);
+
+// Give the player a specific weapon. weapon_id is a weapontype_t value.
+void doom_give_weapon(int weapon_id);
+
 // --- Query ---
 
 // Get player spawn position (set after doom_load_map).
