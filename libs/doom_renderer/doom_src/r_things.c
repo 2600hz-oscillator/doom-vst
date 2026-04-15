@@ -482,26 +482,26 @@ void R_ProjectSprite (mobj_t* thing)
     // transform the origin point
     tr_x = thing->x - viewx;
     tr_y = thing->y - viewy;
-	
-    gxt = FixedMul(tr_x,viewcos); 
+
+    gxt = FixedMul(tr_x,viewcos);
     gyt = -FixedMul(tr_y,viewsin);
-    
-    tz = gxt-gyt; 
+
+    tz = gxt-gyt;
 
     // thing is behind view plane?
     if (tz < MINZ)
 	return;
-    
+
     xscale = FixedDiv(projection, tz);
-	
-    gxt = -FixedMul(tr_x,viewsin); 
-    gyt = FixedMul(tr_y,viewcos); 
-    tx = -(gyt+gxt); 
+
+    gxt = -FixedMul(tr_x,viewsin);
+    gyt = FixedMul(tr_y,viewcos);
+    tx = -(gyt+gxt);
 
     // too far off the side?
     if (abs(tx)>(tz<<2))
 	return;
-    
+
     // decide which patch to use for sprite relative to player
     if ((unsigned)thing->sprite >= (unsigned)numsprites)
 	return;

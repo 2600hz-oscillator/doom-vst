@@ -9,9 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
-// Doom mobjtype_t values we need (from info.h)
-#define MT_TROOP 3  // Imp
+// Doom mobjtype_t values we need (from info.h enum)
+#define MT_TROOP 11  // Imp (MT_PLAYER=0, ..., MT_CHAINGUY=10, MT_TROOP=11)
 
 static void write_ppm(const char* filename, const doom_frame_t* frame)
 {
@@ -94,19 +95,24 @@ int main(int argc, char** argv)
     write_ppm(output_path, frame);
 
     // Spawn an imp in front of the player and render again
-    printf("\nSpawning an imp 512 units ahead...\n");
-    // Calculate position in front of player
-    // In Doom fixed-point: 512 map units = 512 << 16
-    int32_t imp_x = px + 512 * DOOM_FRACUNIT;
-    int32_t imp_y = py;
+    printf("\nSpawning an imp 200 units ahead...\n");
+    // Convert Doom angle to radians and project forward into visible room
+    double angle_rad = (double)pangle * (2.0 * M_PI / 4294967296.0);
+    int32_t imp_x = px + (int32_t)(cos(angle_rad) * 200) * DOOM_FRACUNIT;
+    int32_t imp_y = py + (int32_t)(sin(angle_rad) * 200) * DOOM_FRACUNIT;
+    printf("Imp position: map(%.0f, %.0f)\n", imp_x / 65536.0, imp_y / 65536.0);
     int imp = doom_spawn_thing(imp_x, imp_y, MT_TROOP);
     if (imp >= 0) {
         printf("Imp spawned (handle=%d)\n", imp);
 
-        // Advance a tick so the imp's state initializes
-        doom_tick();
+        // Also try spawning a second imp at the player position offset right
+        int32_t imp2_x = px + 80 * DOOM_FRACUNIT;
+        int32_t imp2_y = py + 200 * DOOM_FRACUNIT;
+        printf("Imp2 at map(%.0f, %.0f)\n", imp2_x/65536.0, imp2_y/65536.0);
+        int imp2 = doom_spawn_thing(imp2_x, imp2_y, MT_TROOP);
+        printf("Imp2 handle=%d\n", imp2);
 
-        // Render with imp visible
+        // Render with imps
         frame = doom_render_frame();
         if (frame != NULL) {
             char imp_path[256];
