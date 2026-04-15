@@ -1,0 +1,22 @@
+# Build
+build/
+*.o
+*.a
+
+# Test output (baselines are tracked separately)
+*.ppm
+*.png
+!/test/baselines/*.ppm
+
+# Reference source (not part of build)
+resources/DOOM/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
