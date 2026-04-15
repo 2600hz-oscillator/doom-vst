@@ -38,6 +38,9 @@ public:
     SignalBus& getSignalBus() { return signalBus; }
     double getCurrentSampleRate() const { return currentSampleRate; }
 
+    // Scene override from control window (-1 = no override, use MIDI PC)
+    std::atomic<int> sceneOverride { -1 };
+
 private:
     SignalBus signalBus;
     MidiHandler midiHandler;

@@ -3,8 +3,9 @@
 #include "scenes/SpriteSpectrumScene.h"
 #include "scenes/AnalyzerRoomScene.h"
 
-DoomViewport::DoomViewport(SignalBus& bus, double sampleRate)
-    : signalBus(bus), pullBuffer(8192, 0.0f)
+DoomViewport::DoomViewport(SignalBus& bus, double sampleRate,
+                           std::atomic<int>* sceneOverride)
+    : signalBus(bus), pullBuffer(8192, 0.0f), sceneOverridePtr(sceneOverride)
 {
     analyzer.setSampleRate(sampleRate);
     glContext.setRenderer(this);
@@ -172,7 +173,17 @@ void DoomViewport::renderOpenGL()
     if (vel > params["sector_light.all"])
         params["sector_light.all"] = vel;
 
-    // Check for scene switch via MIDI Program Change
+    // Scene switching: control window override takes priority, then MIDI PC
+    if (sceneOverridePtr)
+    {
+        int override = sceneOverridePtr->load(std::memory_order_relaxed);
+        if (override >= 0 && override != lastSceneOverride && engine && engine->isMapLoaded())
+        {
+            lastSceneOverride = override;
+            sceneManager.switchTo(override % sceneManager.getNumScenes(), *engine);
+        }
+    }
+
     int pc = signalBus.getProgramChange();
     if (pc != lastProgramChange && engine && engine->isMapLoaded())
     {

@@ -14,7 +14,8 @@ class DoomViewport : public juce::Component,
                      public juce::OpenGLRenderer
 {
 public:
-    DoomViewport(SignalBus& signalBus, double sampleRate);
+    DoomViewport(SignalBus& signalBus, double sampleRate,
+                 std::atomic<int>* sceneOverride = nullptr);
     ~DoomViewport() override;
 
     void setSampleRate(double sr);
@@ -45,8 +46,10 @@ private:
     // Timing
     double lastFrameTime = 0.0;
 
-    // Scene switching from MIDI PC
+    // Scene switching
     int lastProgramChange = -1;
+    int lastSceneOverride = -1;
+    std::atomic<int>* sceneOverridePtr = nullptr;
 
     juce::String findWadPath() const;
     juce::String findConfigPath(const juce::String& bundleRoot) const;

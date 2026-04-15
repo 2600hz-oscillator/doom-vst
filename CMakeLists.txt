@@ -32,6 +32,7 @@ target_sources(DoomViz PRIVATE
     src/PluginProcessor.cpp
     src/PluginEditor.cpp
     src/DoomViewport.cpp
+    src/ControlWindow.cpp
     src/doom/DoomEngine.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
