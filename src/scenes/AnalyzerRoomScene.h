@@ -8,9 +8,9 @@
 class AudioAnalyzer;
 class SignalBus;
 
-// Scene C: Inside the Doom engine, holding the BFG9000.
-// Camera rotates in place at BPM rate. FFT spectrum is injected
-// onto a wall texture so it appears on the walls around the player.
+// Scene C: Inside the Doom engine holding BFG9000.
+// Player wanders E1M1 with collision avoidance. FFT spectrum is injected
+// onto a wall texture so it appears on walls around the player.
 class AnalyzerRoomScene : public Scene
 {
 public:
@@ -28,33 +28,25 @@ private:
     const AudioAnalyzer& analyzer;
     const SignalBus& signalBus;
 
-    // Camera
+    // Camera / navigation
     int32_t camX = 0, camY = 0, camZ = 0;
     uint32_t camAngle = 0;
+    float walkSpeed = 400.0f;
+    float turnTimer = 0.0f;
+    float turnDirection = 1.0f;
+    float blockedTimer = 0.0f;
 
-    // Rotation
-    float bpm = 120.0f;
-    int lastClockCount = 0;
-
-    // Wall texture buffer (column-major, allocated after getting texture dims)
+    // Wall texture buffer
     std::vector<uint8_t> texPixels;
     int texWidth = 0, texHeight = 0;
     bool texInitialized = false;
 
-    // The wall texture we replace
     static constexpr const char* kTargetTexture = "STARTAN3";
 
-    // Bar colors as Doom palette indices (approximate)
     static constexpr uint8_t kBarPalette[kNumBars] = {
-        176, // red
-        208, // orange
-        160, // yellow
-        112, // green
-        192, // cyan
-        200, // blue
-        248, // purple
-        252, // magenta/pink
+        176, 208, 160, 112, 192, 200, 248, 252
     };
 
+    void updateNavigation(DoomEngine& engine, float deltaTime);
     void renderFFTToTexture();
 };

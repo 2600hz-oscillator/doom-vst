@@ -28,6 +28,7 @@ public:
 
     // Camera control
     void setCamera(int32_t x, int32_t y, int32_t z, uint32_t angle);
+    void setCameraAngle(uint32_t angle);
     void getPlayerPos(int32_t& x, int32_t& y, int32_t& z, uint32_t& angle);
 
     // Collision-checked movement. Returns true if the move succeeded.

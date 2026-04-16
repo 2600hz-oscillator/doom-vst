@@ -1,4 +1,5 @@
 #include "SceneManager.h"
+#include "doom/DoomEngine.h"
 
 SceneManager::SceneManager() = default;
 
@@ -25,6 +26,9 @@ void SceneManager::switchTo(int index, DoomEngine& engine)
 
     if (activeIndex >= 0)
         scenes[static_cast<size_t>(activeIndex)]->cleanup(engine);
+
+    // Reload the map to fully reset all engine state (monsters, textures, sectors)
+    engine.loadMap(1, 1);
 
     activeIndex = index;
     scenes[static_cast<size_t>(activeIndex)]->init(engine);

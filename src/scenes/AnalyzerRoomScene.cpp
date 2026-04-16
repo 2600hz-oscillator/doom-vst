@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <cstring>
 
-// BFG9000 weapon ID
 static constexpr int WP_BFG = 6;
+static constexpr float PI = 3.14159265f;
 
 AnalyzerRoomScene::AnalyzerRoomScene(const AudioAnalyzer& az, const SignalBus& bus)
     : analyzer(az), signalBus(bus)
@@ -18,13 +18,14 @@ AnalyzerRoomScene::AnalyzerRoomScene(const AudioAnalyzer& az, const SignalBus& b
 void AnalyzerRoomScene::init(DoomEngine& engine)
 {
     engine.getPlayerPos(camX, camY, camZ, camAngle);
-    bpm = 120.0f;
-    lastClockCount = 0;
+    walkSpeed = 400.0f;
+    turnTimer = 0.0f;
+    turnDirection = 1.0f;
+    blockedTimer = 0.0f;
 
     engine.setGodMode(true);
     engine.giveWeapon(WP_BFG);
 
-    // Get the wall texture dimensions
     if (!texInitialized)
     {
         engine.setWallTextureData(kTargetTexture, nullptr, &texWidth, &texHeight);
@@ -36,42 +37,71 @@ void AnalyzerRoomScene::init(DoomEngine& engine)
     }
 }
 
+void AnalyzerRoomScene::updateNavigation(DoomEngine& engine, float deltaTime)
+{
+    turnTimer += deltaTime;
+
+    // Periodically change gentle turn direction
+    if (turnTimer > 5.0f)
+    {
+        turnTimer = 0.0f;
+        turnDirection = -turnDirection;
+    }
+
+    // If blocked, turn in place until clear
+    if (blockedTimer > 0.0f)
+    {
+        blockedTimer -= deltaTime;
+        camAngle += static_cast<uint32_t>(turnDirection * 500000000.0f * deltaTime);
+        engine.setCameraAngle(camAngle);
+        return;
+    }
+
+    // Gentle ambient turn
+    float gentleTurn = turnDirection * 0.15f;
+    camAngle += static_cast<uint32_t>(gentleTurn * 100000000.0f * deltaTime);
+    engine.setCameraAngle(camAngle);
+
+    // Movement speed driven by the first band (sub bass / red)
+    const float* envelope = analyzer.getBandEnvelope();
+    float bassLevel = envelope[0]; // band 0 = sub bass (20-40Hz), maps to red bar
+    float currentSpeed = walkSpeed * bassLevel;
+
+    float angleRad = static_cast<float>(camAngle) * (2.0f * PI / 4294967296.0f);
+    float dist = currentSpeed * deltaTime;
+    int32_t dx = static_cast<int32_t>(std::cos(angleRad) * dist * 65536.0f);
+    int32_t dy = static_cast<int32_t>(std::sin(angleRad) * dist * 65536.0f);
+
+    if (engine.movePlayer(dx, dy))
+    {
+        // Move succeeded — read back new position (movePlayer updates mobj)
+        engine.getPlayerPos(camX, camY, camZ, camAngle);
+    }
+    else
+    {
+        blockedTimer = 0.4f + 0.3f * std::fmod(turnTimer * 7.0f, 1.0f);
+        turnDirection = -turnDirection;
+    }
+}
+
 void AnalyzerRoomScene::update(DoomEngine& engine, const ParameterMap& params,
                                 float deltaTime)
 {
     (void)params;
 
-    // BPM from MIDI clock (24 ppqn)
-    int currentClock = signalBus.getMidiClockCount();
-    if (currentClock != lastClockCount)
+    if (engine.isPlayerDead())
     {
-        int ticksDelta = currentClock - lastClockCount;
-        lastClockCount = currentClock;
-
-        if (ticksDelta > 0 && deltaTime > 0.0f)
-        {
-            float ticksPerSec = static_cast<float>(ticksDelta) / deltaTime;
-            float measuredBpm = (ticksPerSec / 24.0f) * 60.0f;
-            if (measuredBpm > 30.0f && measuredBpm < 300.0f)
-                bpm = bpm * 0.9f + measuredBpm * 0.1f;
-        }
+        engine.respawnPlayer();
+        engine.getPlayerPos(camX, camY, camZ, camAngle);
+        engine.setGodMode(true);
     }
 
-    // Rotate camera: BPM degrees/sec (360 BPM = 1 revolution/sec)
-    float degreesPerSec = bpm;
-    uint32_t angleDelta = static_cast<uint32_t>(
-        degreesPerSec / 360.0f * 4294967296.0f * deltaTime);
-    camAngle += angleDelta;
+    updateNavigation(engine, deltaTime);
 
-    // Render FFT to the wall texture
     renderFFTToTexture();
 
-    // Inject texture into Doom
     if (texInitialized)
         engine.setWallTextureData(kTargetTexture, texPixels.data(), nullptr, nullptr);
-
-    // Set camera (stationary, just rotating)
-    engine.setCamera(camX, camY, camZ, camAngle);
 }
 
 void AnalyzerRoomScene::renderFFTToTexture()
@@ -79,10 +109,8 @@ void AnalyzerRoomScene::renderFFTToTexture()
     if (!texInitialized || texWidth <= 0 || texHeight <= 0)
         return;
 
-    // Clear to dark
     std::memset(texPixels.data(), 0, texPixels.size());
 
-    // Get band envelope values
     const float* envelope = analyzer.getBandEnvelope();
     int analyzerBands = analyzer.getNumBands();
 
@@ -90,7 +118,6 @@ void AnalyzerRoomScene::renderFFTToTexture()
 
     for (int i = 0; i < kNumBars; ++i)
     {
-        // Map analyzer bands to our 8 display bands
         int srcIdx = i * analyzerBands / kNumBars;
         int srcEnd = (i + 1) * analyzerBands / kNumBars;
         float amp = 0.0f;
@@ -107,14 +134,11 @@ void AnalyzerRoomScene::renderFFTToTexture()
 
         uint8_t color = kBarPalette[i];
 
-        // Draw column-major: for each column in this bar's range
         int colStart = i * barW;
         int colEnd = std::min(colStart + barW - 1, texWidth);
 
         for (int col = colStart; col < colEnd; ++col)
         {
-            // Column data is at texPixels[col * texHeight ... col * texHeight + texHeight-1]
-            // Draw bar from bottom up
             for (int row = 0; row < barH; ++row)
             {
                 int y = texHeight - 1 - row;

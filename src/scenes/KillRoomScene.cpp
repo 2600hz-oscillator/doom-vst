@@ -17,8 +17,8 @@ void KillRoomScene::init(DoomEngine& engine)
     combatCooldown = 0.0f;
     monsters.clear();
 
-    // Invulnerable — we're a visualizer, not a game
     engine.setGodMode(true);
+    engine.giveWeapon(2); // wp_shotgun
 
     findOutdoorSectors(engine);
 }
@@ -55,7 +55,6 @@ void KillRoomScene::update(DoomEngine& engine, const ParameterMap& params,
     updateMonsters(engine, params, deltaTime);
     updateLighting(engine, params);
 
-    engine.setCamera(camX, camY, camZ, camAngle);
     engine.tick();
 }
 
@@ -84,10 +83,8 @@ void KillRoomScene::updateCamera(DoomEngine& engine, const ParameterMap& params,
     if (blockedTimer > 0.0f)
     {
         blockedTimer -= deltaTime;
-        // Turn aggressively — ~90 degrees per 0.5 seconds
         camAngle += static_cast<uint32_t>(turnDirection * 500000000.0f * deltaTime);
-        engine.setCamera(camX, camY, camZ, camAngle);
-        engine.getPlayerPos(camX, camY, camZ, camAngle);
+        engine.setCameraAngle(camAngle);
         return;
     }
 
@@ -96,22 +93,22 @@ void KillRoomScene::updateCamera(DoomEngine& engine, const ParameterMap& params,
     float gentleTurn = turnDirection * 0.15f
                        + shake * 2.0f * (std::fmod(turnTimer * 17.0f, 2.0f) - 1.0f);
     camAngle += static_cast<uint32_t>(gentleTurn * 100000000.0f * deltaTime);
+    engine.setCameraAngle(camAngle);
 
     // Try to move forward
     float angleRad = static_cast<float>(camAngle) * (2.0f * 3.14159265f / 4294967296.0f);
     int32_t dx = static_cast<int32_t>(std::cos(angleRad) * moveSpeed * deltaTime);
     int32_t dy = static_cast<int32_t>(std::sin(angleRad) * moveSpeed * deltaTime);
 
-    if (!engine.movePlayer(dx, dy))
+    if (engine.movePlayer(dx, dy))
     {
-        // Blocked — commit to turning for a while before trying forward again
+        engine.getPlayerPos(camX, camY, camZ, camAngle);
+    }
+    else
+    {
         blockedTimer = 0.4f + 0.3f * (std::fmod(turnTimer * 7.0f, 1.0f));
-        // Reverse turn direction so we try the other way
         turnDirection = -turnDirection;
     }
-
-    engine.setCamera(camX, camY, camZ, camAngle);
-    engine.getPlayerPos(camX, camY, camZ, camAngle);
 }
 
 void KillRoomScene::updateMonsters(DoomEngine& engine, const ParameterMap& params,

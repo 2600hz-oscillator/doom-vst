@@ -63,6 +63,9 @@ doom_map_info_t doom_get_map_info(void);
 // angle is in Doom BAM (Binary Angle Measurement): 0=East, 0x40000000=North, etc.
 void doom_set_camera(int32_t x, int32_t y, int32_t z, uint32_t angle);
 
+// Set only the camera angle (does not move the player or touch the blockmap).
+void doom_set_camera_angle(uint32_t angle);
+
 // --- Objects (Things) ---
 
 // Spawn a thing at the given position. type_id is a mobjtype_t value.

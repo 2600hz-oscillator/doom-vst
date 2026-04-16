@@ -222,6 +222,14 @@ void doom_set_camera(int32_t x, int32_t y, int32_t z, uint32_t angle)
     P_SetThingPosition(players[0].mo);
 }
 
+void doom_set_camera_angle(uint32_t angle)
+{
+    if (!map_loaded || !players[0].mo)
+        return;
+
+    players[0].mo->angle = angle;
+}
+
 int doom_spawn_thing(int32_t x, int32_t y, int type_id)
 {
     if (!map_loaded)

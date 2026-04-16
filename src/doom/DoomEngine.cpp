@@ -80,6 +80,11 @@ void DoomEngine::setCamera(int32_t x, int32_t y, int32_t z, uint32_t angle)
     doom_set_camera(x, y, z, angle);
 }
 
+void DoomEngine::setCameraAngle(uint32_t angle)
+{
+    doom_set_camera_angle(angle);
+}
+
 void DoomEngine::getPlayerPos(int32_t& x, int32_t& y, int32_t& z, uint32_t& angle)
 {
     doom_get_player_pos(&x, &y, &z, &angle);
