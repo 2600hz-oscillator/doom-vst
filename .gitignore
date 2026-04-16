@@ -7,6 +7,7 @@ build/
 *.ppm
 *.png
 !/test/baselines/*.ppm
+!/docs/images/*.png
 
 # Reference source (not part of build)
 resources/DOOM/
