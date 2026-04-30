@@ -61,30 +61,42 @@ routes:
     scale: 1.0
 ```
 
-## Building (macOS)
+## Building
 
-Requires Apple Clang + [Flox](https://flox.dev/).
+All builds run inside [Flox](https://flox.dev/), which manages cmake / ninja / git-lfs / python deps.
+The only host requirement is the platform compiler:
+
+- **macOS**: Apple Clang via Xcode Command Line Tools (`xcode-select --install`)
+- **Linux**: nothing extra; flox provides everything
+
+Build via [Task](https://taskfile.dev/) (also installed by flox):
 
 ```bash
 git clone --recursive <repo>
-cd doom_viz && flox activate
-mkdir -p build && cd build
-cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-cd ..
-flox activate -- cmake --build build -j1 --target DoomViz_VST3
-cp -R build/DoomViz_artefacts/VST3/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/
-codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/DoomViz.vst3
+cd doom_viz
+flox activate
+
+task build         # builds for the current platform
+task install-mac   # macOS only: installs the VST3 system-wide
+task test          # runs the render baseline test
+task --list        # see all tasks
 ```
 
-`DOOM1.WAD` (shareware) is auto-bundled into the plugin during build.
+`DOOM1.WAD` (shareware) is auto-bundled into the plugin during build. The render baseline test
+verifies the renderer is byte-deterministic against committed PPMs.
 
-### Tests
+### Cross-platform VST3 builds
+
+`task build-mac` and `task build-linux` are explicit. On Linux, `build-linux` runs natively.
+From macOS, building a Linux VST3 requires running the build inside a Linux container; the
+flox manifest declares Linux deps (X11, OpenGL, ALSA, etc.), so:
 
 ```bash
-flox activate -- bash -c 'cd build && ctest --output-on-failure'
+flox containerize | docker load
+docker run --rm -v $(pwd):/work -w /work flox-doomviz task build-linux
 ```
 
-The render baseline test verifies the renderer is byte-deterministic against committed PPMs.
+A prebuilt macOS VST3 is committed under `dist/` (binary tracked via git-lfs).
 
 ## Project layout
 

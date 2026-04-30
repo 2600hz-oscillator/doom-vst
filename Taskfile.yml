@@ -1,0 +1,107 @@
+version: '3'
+
+vars:
+  BUILD_DIR: build
+  DIST_DIR: dist
+  VST3_NAME: DoomViz.vst3
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  configure:
+    desc: Run cmake configure (auto-picks compiler per OS)
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - |
+        if [ "$(uname)" = "Darwin" ]; then
+          cd {{.BUILD_DIR}} && cmake .. \
+            -DCMAKE_C_COMPILER=/usr/bin/clang \
+            -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+        else
+          cd {{.BUILD_DIR}} && cmake .. -G Ninja
+        fi
+    sources:
+      - CMakeLists.txt
+      - extern/JUCE/CMakeLists.txt
+    generates:
+      - "{{.BUILD_DIR}}/CMakeCache.txt"
+
+  build:
+    desc: Build the VST3 for the current platform (macOS or Linux)
+    deps: [configure]
+    cmds:
+      - |
+        if [ "$(uname)" = "Darwin" ]; then
+          task: build-mac
+        else
+          task: build-linux
+        fi
+
+  build-mac:
+    desc: Build the macOS VST3 (requires Xcode Command Line Tools on host)
+    deps: [configure]
+    preconditions:
+      - sh: "[ \"$(uname)\" = \"Darwin\" ]"
+        msg: "build-mac only runs on macOS"
+      - sh: "test -x /usr/bin/clang"
+        msg: "Apple Clang not found. Install: xcode-select --install"
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j1 --target DoomViz_VST3
+      - mkdir -p {{.DIST_DIR}}
+      - rm -rf {{.DIST_DIR}}/{{.VST3_NAME}}
+      - cp -R {{.BUILD_DIR}}/DoomViz_artefacts/VST3/{{.VST3_NAME}} {{.DIST_DIR}}/
+      - codesign --force --deep --sign - {{.DIST_DIR}}/{{.VST3_NAME}}
+      - echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
+
+  build-linux:
+    desc: Build the Linux VST3 (runs natively if on Linux, else via flox container)
+    cmds:
+      - |
+        if [ "$(uname)" = "Linux" ]; then
+          mkdir -p {{.BUILD_DIR}}-linux
+          cd {{.BUILD_DIR}}-linux && cmake .. -G Ninja
+          cmake --build . --target DoomViz_VST3
+          mkdir -p ../{{.DIST_DIR}}
+          rm -rf ../{{.DIST_DIR}}/{{.VST3_NAME}}
+          cp -R DoomViz_artefacts/VST3/{{.VST3_NAME}} ../{{.DIST_DIR}}/
+          echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
+        else
+          echo "Cross-platform Linux builds use 'flox containerize' + container runtime."
+          echo "To build a Linux VST3 from macOS:"
+          echo "  flox containerize | docker load"
+          echo "  docker run --rm -v \$(pwd):/work -w /work doom-viz task build-linux"
+          exit 1
+        fi
+
+  install-mac:
+    desc: Install the macOS VST3 to ~/Library/Audio/Plug-Ins/VST3/
+    deps: [build-mac]
+    preconditions:
+      - sh: "[ \"$(uname)\" = \"Darwin\" ]"
+        msg: "install-mac only runs on macOS"
+    cmds:
+      - rm -rf ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
+      - cp -R {{.DIST_DIR}}/{{.VST3_NAME}} ~/Library/Audio/Plug-Ins/VST3/
+      - codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
+      - "xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}} 2>/dev/null || true"
+      - echo "Installed to ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}"
+
+  test:
+    desc: Run the render baseline test
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target render_test
+      - cd {{.BUILD_DIR}} && ctest --output-on-failure
+
+  clean:
+    desc: Remove build artifacts (keeps dist/)
+    cmds:
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR}}-linux
+
+  clean-all:
+    desc: Remove build and dist artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}} {{.BUILD_DIR}}-linux {{.DIST_DIR}}

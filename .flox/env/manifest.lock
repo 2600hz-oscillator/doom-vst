@@ -3,8 +3,29 @@
   "manifest": {
     "schema-version": "1.11.0",
     "install": {
+      "alsa-lib": {
+        "pkg-path": "alsa-lib",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
       "cmake": {
         "pkg-path": "cmake"
+      },
+      "curl": {
+        "pkg-path": "curl",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
+      "freetype": {
+        "pkg-path": "freetype",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
       },
       "gcc": {
         "pkg-path": "gcc"
@@ -12,18 +33,139 @@
       "git-lfs": {
         "pkg-path": "git-lfs"
       },
+      "go-task": {
+        "pkg-path": "go-task"
+      },
+      "libglvnd": {
+        "pkg-path": "libglvnd",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
+      "mesa": {
+        "pkg-path": "mesa",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
       "mido": {
         "pkg-path": "python312Packages.mido"
       },
+      "ninja": {
+        "pkg-path": "ninja"
+      },
       "pkg-config": {
         "pkg-path": "pkg-config"
+      },
+      "webkitgtk": {
+        "pkg-path": "webkitgtk_4_1",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
+      "xorg-xcursor": {
+        "pkg-path": "xorg.libXcursor",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
+      "xorg-xinerama": {
+        "pkg-path": "xorg.libXinerama",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
+      },
+      "xorg-xrandr": {
+        "pkg-path": "xorg.libXrandr",
+        "systems": [
+          "aarch64-linux",
+          "x86_64-linux"
+        ]
       }
     },
     "hook": {},
     "profile": {},
-    "options": {}
+    "options": {
+      "systems": [
+        "aarch64-darwin",
+        "aarch64-linux",
+        "x86_64-darwin",
+        "x86_64-linux"
+      ]
+    }
   },
   "packages": [
+    {
+      "attr_path": "alsa-lib",
+      "broken": false,
+      "derivation": "/nix/store/qcv309inrix3qqwd9y9pzp4r86314zly-alsa-lib-1.2.14.drv",
+      "description": "ALSA, the Advanced Linux Sound Architecture libraries",
+      "install_id": "alsa-lib",
+      "license": "LGPL-2.1-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "alsa-lib-1.2.14",
+      "pname": "alsa-lib",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:00.339296Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.2.14",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/g3hgh49cyj2bl14gb2264i9pmb2h4qwa-alsa-lib-1.2.14-dev",
+        "out": "/nix/store/0gz222x6bjjk82mj2pnk4828hg8vih6b-alsa-lib-1.2.14"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "alsa-lib",
+      "broken": false,
+      "derivation": "/nix/store/63wkvg1xkpjd43ixhx5jvvwzifjvkdr5-alsa-lib-1.2.14.drv",
+      "description": "ALSA, the Advanced Linux Sound Architecture libraries",
+      "install_id": "alsa-lib",
+      "license": "LGPL-2.1-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "alsa-lib-1.2.14",
+      "pname": "alsa-lib",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:17.853689Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.2.14",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/21fxbdc2kbhr9glvdhfmk80fl4xra4d9-alsa-lib-1.2.14-dev",
+        "out": "/nix/store/cm2986rrpqxbdjr46a7kxf1pgi2bwyss-alsa-lib-1.2.14"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
     {
       "attr_path": "cmake",
       "broken": false,
@@ -137,6 +279,152 @@
       "outputs": {
         "debug": "/nix/store/pnizhra0882ijp3nilvzdzbaa0ayq4hd-cmake-4.1.2-debug",
         "out": "/nix/store/w9jm660dykns6hzrdhxmqfywnc9ail8g-cmake-4.1.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "curl",
+      "broken": false,
+      "derivation": "/nix/store/lm6r4q6hb8rhgmcz2884gppkh0a5k83f-curl-8.17.0.drv",
+      "description": "Command line tool for transferring files with URL syntax",
+      "install_id": "curl",
+      "license": "curl",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "curl-8.17.0",
+      "pname": "curl",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:01.057378Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.17.0",
+      "outputs_to_install": [
+        "bin",
+        "bin",
+        "man",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/4x19j6zihdl6pya63xs8g360f2r614sx-curl-8.17.0-bin",
+        "debug": "/nix/store/5hmbdk99knmbg8b0fzh96bv6bkcf6v5i-curl-8.17.0-debug",
+        "dev": "/nix/store/iqs9mjscns3h5npgkrhgr5xa7qzwd0si-curl-8.17.0-dev",
+        "devdoc": "/nix/store/1fwncv08c8g78k3hj3cj375vx92ndrp8-curl-8.17.0-devdoc",
+        "man": "/nix/store/b29qbmbfvzkm34k0jnj8ykqg2gzj3rdy-curl-8.17.0-man",
+        "out": "/nix/store/b0a6qc92vybjiggh0kg387cg0zp3kl6j-curl-8.17.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "curl",
+      "broken": false,
+      "derivation": "/nix/store/k9jd8shf8xlg0x43n23rlc59mdgaapda-curl-8.17.0.drv",
+      "description": "Command line tool for transferring files with URL syntax",
+      "install_id": "curl",
+      "license": "curl",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "curl-8.17.0",
+      "pname": "curl",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:18.660521Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.17.0",
+      "outputs_to_install": [
+        "bin",
+        "bin",
+        "bin",
+        "bin",
+        "bin",
+        "man",
+        "man",
+        "man",
+        "man",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/0rfz69vp1nl0q2hxzig20hc60sk72z62-curl-8.17.0-bin",
+        "debug": "/nix/store/h1fxw0xrifxvbhcp7b8hxsgirxxxfzav-curl-8.17.0-debug",
+        "dev": "/nix/store/ikmdk37frjdblkba3wl3xws2wwgln17x-curl-8.17.0-dev",
+        "devdoc": "/nix/store/jm6irg81cc0hqg43l39lkxr6pb0w2xk5-curl-8.17.0-devdoc",
+        "man": "/nix/store/ijd0yybyzwm98d3q6x7a9cyixgxk0i5d-curl-8.17.0-man",
+        "out": "/nix/store/8idis3j5l13c3x74jl8xly0k4qyk9mx6-curl-8.17.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "freetype",
+      "broken": false,
+      "derivation": "/nix/store/gdvw81nljpc76gw4l41y2x0bvpkgi7az-freetype-2.13.3.drv",
+      "description": "Font rendering engine",
+      "install_id": "freetype",
+      "license": "GPL-2.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "freetype-2.13.3",
+      "pname": "freetype",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:01.826315Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.13.3",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/ksq6x53jrhpzmcagjgzwyhv6am9xl30l-freetype-2.13.3-dev",
+        "out": "/nix/store/1nj8112y0v4z9llb20d5plkyxq8laji4-freetype-2.13.3"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "freetype",
+      "broken": false,
+      "derivation": "/nix/store/4dm0mqbhaqlm62hrmjs751c4p8ca9h20-freetype-2.13.3.drv",
+      "description": "Font rendering engine",
+      "install_id": "freetype",
+      "license": "GPL-2.0-or-later",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "freetype-2.13.3",
+      "pname": "freetype",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:19.563416Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.13.3",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/zykjcxzj7mg1x325xxfnrymf50daqvgb-freetype-2.13.3-dev",
+        "out": "/nix/store/b6rhgkvrwzq0bzfpaw79b60i1bfbhk3w-freetype-2.13.3"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -395,6 +683,254 @@
       "priority": 5
     },
     {
+      "attr_path": "go-task",
+      "broken": false,
+      "derivation": "/nix/store/6j5568v5g6drvyf7g6l63h79bq1536sq-go-task-3.45.5.drv",
+      "description": "Task runner / simpler Make alternative written in Go",
+      "install_id": "go-task",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "go-task-3.45.5",
+      "pname": "go-task",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:02:39.309147Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.45.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/hq2nfh8sndri3x4z4k1j9g9wk6l0kp5q-go-task-3.45.5"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "go-task",
+      "broken": false,
+      "derivation": "/nix/store/rjw95fz6aaczx1yc3g4b8afcqha3vpk6-go-task-3.45.5.drv",
+      "description": "Task runner / simpler Make alternative written in Go",
+      "install_id": "go-task",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "go-task-3.45.5",
+      "pname": "go-task",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:02.914687Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.45.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/4ac3xjjbvapdifhzqn3cj012b685bysi-go-task-3.45.5"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "go-task",
+      "broken": false,
+      "derivation": "/nix/store/2a4rphy0l4dpnb47jrlfr01hs7xgqgiq-go-task-3.45.5.drv",
+      "description": "Task runner / simpler Make alternative written in Go",
+      "install_id": "go-task",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "go-task-3.45.5",
+      "pname": "go-task",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:34:54.613190Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.45.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/57gnc0hahiawf2dmiiy6z6kxmaq2a41m-go-task-3.45.5"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "go-task",
+      "broken": false,
+      "derivation": "/nix/store/2hmcc9is241r7lxp3z56i4mrggq2fsfg-go-task-3.45.5.drv",
+      "description": "Task runner / simpler Make alternative written in Go",
+      "install_id": "go-task",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "go-task-3.45.5",
+      "pname": "go-task",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:20.458321Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.45.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/8j7jr4fpjlmbcyb1crr8gy00z8d768vm-go-task-3.45.5"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "libglvnd",
+      "broken": false,
+      "derivation": "/nix/store/qnybqsz8s5jpak9xcrjp2jlr7ravmz6g-libglvnd-1.7.0.drv",
+      "description": "GL Vendor-Neutral Dispatch library",
+      "install_id": "libglvnd",
+      "license": "[ MIT, BSD-1-Clause, BSD-3-Clause, GPL-3.0-only, Apache-2.0 ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libglvnd-1.7.0",
+      "pname": "libglvnd",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:24.625544Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.7.0",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/q3s3f2ahaqxk9yhl6jdfl7clq39ik1v5-libglvnd-1.7.0-dev",
+        "out": "/nix/store/478vjdcpbqbvzy71y3f3zfbnxh22mdk2-libglvnd-1.7.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "libglvnd",
+      "broken": false,
+      "derivation": "/nix/store/al0yg3k2vs2l97qzlch1x20vbff401x8-libglvnd-1.7.0.drv",
+      "description": "GL Vendor-Neutral Dispatch library",
+      "install_id": "libglvnd",
+      "license": "[ MIT, BSD-1-Clause, BSD-3-Clause, GPL-3.0-only, Apache-2.0 ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libglvnd-1.7.0",
+      "pname": "libglvnd",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:42.954177Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.7.0",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/b608h3ylrhrwpi9bc0y0014jf7j03pzl-libglvnd-1.7.0-dev",
+        "out": "/nix/store/mm4v6w3wj8wi5qc6rwdrb2rkqs08whp9-libglvnd-1.7.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "mesa",
+      "broken": false,
+      "derivation": "/nix/store/kbblys7w249f2cxlg8plzz4hgwa21gq7-mesa-25.3.2.drv",
+      "description": "Open source 3D graphics library",
+      "install_id": "mesa",
+      "license": "[ MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "mesa-25.3.2",
+      "pname": "mesa",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:34.334734Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.3.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cross_tools": "/nix/store/z983n062r9zc9pb33aq9arz3v41ikxph-mesa-25.3.2-cross_tools",
+        "debug": "/nix/store/3skw0npfa9y7pjbfp75l5nsmz27np371-mesa-25.3.2-debug",
+        "opencl": "/nix/store/3awqvkckpbrw7ass7c41q4w2v41w49f3-mesa-25.3.2-opencl",
+        "out": "/nix/store/jqr5bd0qqwq14pzi6jf0c1y9ljbkqgj7-mesa-25.3.2",
+        "spirv2dxil": "/nix/store/1yjrw20xflmhvrnqwf6hrkk1y77iissg-mesa-25.3.2-spirv2dxil"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "mesa",
+      "broken": false,
+      "derivation": "/nix/store/jx6wck47p8ani8lvnx3qh8njr5x97ck4-mesa-25.3.2.drv",
+      "description": "Open source 3D graphics library",
+      "install_id": "mesa",
+      "license": "[ MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "mesa-25.3.2",
+      "pname": "mesa",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:54.017619Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.3.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cross_tools": "/nix/store/9vqsbsvgfhj1b6904j2kiwkv7x9ppk81-mesa-25.3.2-cross_tools",
+        "debug": "/nix/store/08dmhi3la3szniip922zkw0852xmkawj-mesa-25.3.2-debug",
+        "opencl": "/nix/store/1x5dcsjh1lf7cvz4avs0a6k49hlrliqq-mesa-25.3.2-opencl",
+        "out": "/nix/store/ll20jalf0ban5kfabq5708cwa60mgg42-mesa-25.3.2",
+        "spirv2dxil": "/nix/store/75jdfqv2m37dlj2cis6xqvvw3kawzr5b-mesa-25.3.2-spirv2dxil"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "python312Packages.mido",
       "broken": false,
       "derivation": "/nix/store/aw64cbzv539smd99v769mhdfsv14c011-python3.12-mido-1.3.3.drv",
@@ -509,6 +1045,130 @@
       "outputs": {
         "dist": "/nix/store/ys5h3wix3dy8s5b2pdnf4b5fad4pa1n8-python3.12-mido-1.3.3-dist",
         "out": "/nix/store/pr9hfccj19dn9z3as1r1c5nf3cfj43gv-python3.12-mido-1.3.3"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ninja",
+      "broken": false,
+      "derivation": "/nix/store/zgpgyr7b9r0k7lrwx6mpl3ks5k8qcfpf-ninja-1.13.1.drv",
+      "description": "Small build system with a focus on speed",
+      "install_id": "ninja",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ninja-1.13.1",
+      "pname": "ninja",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:02:59.412252Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.13.1",
+      "outputs_to_install": [
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/6y79vrqachzns4pgl8r0j04b7g33hl52-ninja-1.13.1"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ninja",
+      "broken": false,
+      "derivation": "/nix/store/s0in67mmqnv8vkwdyk0a5qdgc1d29q0m-ninja-1.13.1.drv",
+      "description": "Small build system with a focus on speed",
+      "install_id": "ninja",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ninja-1.13.1",
+      "pname": "ninja",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:36.743083Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.13.1",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/jpwn5zii6bzpvf9dm4dw7cdvwychpxwz-ninja-1.13.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ninja",
+      "broken": false,
+      "derivation": "/nix/store/0hpkwsixxhycy3bhb42r4a9dm06q3gvn-ninja-1.13.1.drv",
+      "description": "Small build system with a focus on speed",
+      "install_id": "ninja",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ninja-1.13.1",
+      "pname": "ninja",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:35:16.972602Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.13.1",
+      "outputs_to_install": [
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/82kdfnd09s2npwlsnqzak29nf592czr6-ninja-1.13.1"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ninja",
+      "broken": false,
+      "derivation": "/nix/store/1zj00105nxz5hdr7qhmcf7xm9p1v1nh3-ninja-1.13.1.drv",
+      "description": "Small build system with a focus on speed",
+      "install_id": "ninja",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ninja-1.13.1",
+      "pname": "ninja",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:56.660871Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.13.1",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/nib1r4k4cqph7zjjnbfc1d6cbg11qr76-ninja-1.13.1"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -643,6 +1303,270 @@
         "doc": "/nix/store/x3bypxdxaq20kykybhkf21x4jczsiy8y-pkg-config-wrapper-0.29.2-doc",
         "man": "/nix/store/j9xfpnrygg3v37svc5pfin9q5bm49r94-pkg-config-wrapper-0.29.2-man",
         "out": "/nix/store/8vdiwpbh0g4avsd6x5v4s0di32vcl3dp-pkg-config-wrapper-0.29.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "webkitgtk_4_1",
+      "broken": false,
+      "derivation": "/nix/store/k7939xv5rl8sx6f8jl12d1dsdiyvphx4-webkitgtk-2.50.4+abi=4.1.drv",
+      "description": "Web content rendering engine, GTK port",
+      "install_id": "webkitgtk",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "webkitgtk-2.50.4+abi=4.1",
+      "pname": "webkitgtk_4_1",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:21:36.330527Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.50.4+abi=4.1",
+      "outputs_to_install": [
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "debug": "/nix/store/jr18f7a1slcjqkrl5v0rqw30a92zvpmk-webkitgtk-2.50.4+abi=4.1-debug",
+        "dev": "/nix/store/nly5fpzdvchz35swjv6j5171xbcxlsqg-webkitgtk-2.50.4+abi=4.1-dev",
+        "devdoc": "/nix/store/xabdjyahb384y9rkp1rsy4y27wkzyrnj-webkitgtk-2.50.4+abi=4.1-devdoc",
+        "out": "/nix/store/z9lydmncg6vlhlhdv6n36pf66flwq1gd-webkitgtk-2.50.4+abi=4.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "webkitgtk_4_1",
+      "broken": false,
+      "derivation": "/nix/store/qkdlkxy3q90f0hnjvlcffzkjqqx2wi09-webkitgtk-2.50.4+abi=4.1.drv",
+      "description": "Web content rendering engine, GTK port",
+      "install_id": "webkitgtk",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "webkitgtk-2.50.4+abi=4.1",
+      "pname": "webkitgtk_4_1",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:53:46.834833Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.50.4+abi=4.1",
+      "outputs_to_install": [
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "debug": "/nix/store/hri3b50zx37m7n3lqsiwy14nvqqqgzvg-webkitgtk-2.50.4+abi=4.1-debug",
+        "dev": "/nix/store/b55ybkxzvpnj6ydbr325pnr32rwp3v45-webkitgtk-2.50.4+abi=4.1-dev",
+        "devdoc": "/nix/store/nr4a59li1bdapqqb1smpa00x0857h08r-webkitgtk-2.50.4+abi=4.1-devdoc",
+        "out": "/nix/store/h2vbiqnkrgsmkmnvhvdi6kd2drb3rqdw-webkitgtk-2.50.4+abi=4.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXcursor",
+      "broken": false,
+      "derivation": "/nix/store/1nf37kxbirb7a09ga7429cbc3mg89r80-libxcursor-1.2.3.drv",
+      "description": "X11 Cursor management library",
+      "install_id": "xorg-xcursor",
+      "license": "HPND-sell-variant",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxcursor-1.2.3",
+      "pname": "libXcursor",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:21:40.177095Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.2.3",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/8y073jf10kk5xjq9lx78w801ssbwn0hv-libxcursor-1.2.3-dev",
+        "out": "/nix/store/0zdmkggg3bjhqmxiajflrng8ca5yk8is-libxcursor-1.2.3"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXcursor",
+      "broken": false,
+      "derivation": "/nix/store/yjlhxnzxrxslncy82gr0y8xmwbjz5n6f-libxcursor-1.2.3.drv",
+      "description": "X11 Cursor management library",
+      "install_id": "xorg-xcursor",
+      "license": "HPND-sell-variant",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxcursor-1.2.3",
+      "pname": "libXcursor",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:53:50.761749Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.2.3",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/7ys6dfy22hkm2bklwq7ll7pmby443fka-libxcursor-1.2.3-dev",
+        "out": "/nix/store/ldl1g8r8jfhjv4asb7zkr7ljpgk7q6dv-libxcursor-1.2.3"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXinerama",
+      "broken": false,
+      "derivation": "/nix/store/x2kypjqagpcjiv83ndwm0i93a8fgrnir-libxinerama-1.1.5.drv",
+      "description": "Library for Xinerama extension to X11 Protocol",
+      "install_id": "xorg-xinerama",
+      "license": "[ MIT, MIT-open-group, X11-no-permit-persons ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxinerama-1.1.5",
+      "pname": "libXinerama",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:21:40.217611Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.1.5",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/89ggf1wyqw8rmslg3f8l7l67p5qfyliq-libxinerama-1.1.5-dev",
+        "out": "/nix/store/4gm2ana0vmm1vsyvqnhzs4j3bq36iic2-libxinerama-1.1.5"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXinerama",
+      "broken": false,
+      "derivation": "/nix/store/4wcxv856qxcm1y7wa94j6ydp3kkblj49-libxinerama-1.1.5.drv",
+      "description": "Library for Xinerama extension to X11 Protocol",
+      "install_id": "xorg-xinerama",
+      "license": "[ MIT, MIT-open-group, X11-no-permit-persons ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxinerama-1.1.5",
+      "pname": "libXinerama",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:53:50.799131Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.1.5",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/3slyb9gb4bpvb9d4yimq35hnn2wwd0wk-libxinerama-1.1.5-dev",
+        "out": "/nix/store/02967njjlkrskapfy99fpacns5d0znjr-libxinerama-1.1.5"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXrandr",
+      "broken": false,
+      "derivation": "/nix/store/sc6j75wlplvpra2jrl757iy11q2bc1p9-libxrandr-1.5.4.drv",
+      "description": "Xlib Resize, Rotate and Reflection (RandR) extension library",
+      "install_id": "xorg-xrandr",
+      "license": "HPND-sell-variant",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxrandr-1.5.4",
+      "pname": "libXrandr",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:21:40.239515Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.5.4",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/mppibxslj62d85fnbd2ic0hcbh9nd26y-libxrandr-1.5.4-dev",
+        "out": "/nix/store/1s5rcnx7qnvbxkzijzfqacay05b2fyp9-libxrandr-1.5.4"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xorg.libXrandr",
+      "broken": false,
+      "derivation": "/nix/store/wmr4wghy861kgqmpi8h27h4bmcp9hp65-libxrandr-1.5.4.drv",
+      "description": "Xlib Resize, Rotate and Reflection (RandR) extension library",
+      "install_id": "xorg-xrandr",
+      "license": "HPND-sell-variant",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "libxrandr-1.5.4",
+      "pname": "libXrandr",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:53:50.819663Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.5.4",
+      "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "dev": "/nix/store/s7q5sdki2ax8gla778mbhddf5v9gk4vb-libxrandr-1.5.4-dev",
+        "out": "/nix/store/llr8wn0a3q8vfrg6i7vr2l2k66izm56a-libxrandr-1.5.4"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

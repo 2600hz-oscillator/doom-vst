@@ -12,8 +12,28 @@ pkg-config.pkg-path = "pkg-config"
 mido.pkg-path = "python312Packages.mido"
 gcc.pkg-path = "gcc"
 git-lfs.pkg-path = "git-lfs"
-# gum.pkg-path = "gum"
-# gum.version = "^0.14.5"
+ninja.pkg-path = "ninja"
+go-task.pkg-path = "go-task"
+
+# Linux-only deps for building Linux VST3 (JUCE needs X11/OpenGL/etc.)
+freetype.pkg-path = "freetype"
+freetype.systems = ["aarch64-linux", "x86_64-linux"]
+xorg-xrandr.pkg-path = "xorg.libXrandr"
+xorg-xrandr.systems = ["aarch64-linux", "x86_64-linux"]
+xorg-xinerama.pkg-path = "xorg.libXinerama"
+xorg-xinerama.systems = ["aarch64-linux", "x86_64-linux"]
+xorg-xcursor.pkg-path = "xorg.libXcursor"
+xorg-xcursor.systems = ["aarch64-linux", "x86_64-linux"]
+alsa-lib.pkg-path = "alsa-lib"
+alsa-lib.systems = ["aarch64-linux", "x86_64-linux"]
+mesa.pkg-path = "mesa"
+mesa.systems = ["aarch64-linux", "x86_64-linux"]
+libglvnd.pkg-path = "libglvnd"
+libglvnd.systems = ["aarch64-linux", "x86_64-linux"]
+curl.pkg-path = "curl"
+curl.systems = ["aarch64-linux", "x86_64-linux"]
+webkitgtk.pkg-path = "webkitgtk_4_1"
+webkitgtk.systems = ["aarch64-linux", "x86_64-linux"]
 
 
 ## Environment Variables ---------------------------------------------
@@ -89,12 +109,11 @@ git-lfs.pkg-path = "git-lfs"
 
 ## Other Environment Options -----------------------------------------
 [options]
-# Systems that environment is compatible with
-# systems = [
-#   "aarch64-darwin",
-#   "aarch64-linux",
-#   "x86_64-darwin",
-#   "x86_64-linux",
-# ]
+systems = [
+  "aarch64-darwin",
+  "aarch64-linux",
+  "x86_64-darwin",
+  "x86_64-linux",
+]
 # Uncomment to disable CUDA detection.
 # cuda-detection = false

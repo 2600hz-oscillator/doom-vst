@@ -184,19 +184,25 @@ routes:
             <li><code>doom_set_god_mode</code> / <code>doom_respawn_player</code></li>
         </ul>
 
-        <h2>Building (macOS)</h2>
+        <h2>Building</h2>
+        <p>All builds run inside <a href="https://flox.dev/">Flox</a>, which manages cmake / ninja /
+        git-lfs / python deps. The only host requirement is the platform compiler:</p>
+        <ul>
+            <li><strong>macOS</strong>: Apple Clang via Xcode Command Line Tools (<code>xcode-select --install</code>)</li>
+            <li><strong>Linux</strong>: nothing extra; flox provides everything</li>
+        </ul>
+        <p>Build via <a href="https://taskfile.dev/">Task</a> (also installed by flox):</p>
 <pre>git clone --recursive &lt;repo&gt;
-cd doom_viz && flox activate
-mkdir -p build && cd build
-cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang \
-         -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-cd ..
-flox activate -- cmake --build build -j1 --target DoomViz_VST3
-cp -R build/DoomViz_artefacts/VST3/DoomViz.vst3 \
-      ~/Library/Audio/Plug-Ins/VST3/
-codesign --force --deep --sign - \
-      ~/Library/Audio/Plug-Ins/VST3/DoomViz.vst3</pre>
+cd doom_viz
+flox activate
+
+task build         # builds for the current platform
+task install-mac   # macOS only: installs the VST3
+task test          # runs the render baseline test
+task --list        # see all tasks</pre>
         <p><code>DOOM1.WAD</code> (shareware) is auto-bundled into the plugin during build.</p>
+        <p>From macOS, building a Linux VST3 runs inside a flox-managed Linux container.
+        A prebuilt macOS VST3 is committed under <code>dist/</code> (binary tracked via git-lfs).</p>
 
         <h2>Stack</h2>
         <ul>
