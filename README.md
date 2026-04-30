@@ -20,7 +20,7 @@ Walks E1M1 with the shotgun. Audio onsets spawn monsters in front of the player.
 ### Analyzer (PC 1)
 Walks E1M1 with the BFG9000. Eight audio bands are injected as colored bars onto the `STARTAN3` wall texture in real time. Player movement speed tracks the sub-bass band &mdash; bass moves you, silence stops you.
 
-### Acidwarp (PC 2)
+### Doom Spectrum (PC 2)
 2D mode. Pulsing audio-driven warp pattern (layered sin/cos + radial fields) behind eight Doom sprites scaled by frequency band. Each band parameter (zoom, swirl rate, color shift, intensity) is locked to a different band envelope, so the visual moves *with* the music. Sprites: Doom marine (bands 0-1, bass), imp (bands 2-5, mids), zombieman (band 6), shotgun guy (band 7). Onsets jolt the palette.
 
 ## How it works

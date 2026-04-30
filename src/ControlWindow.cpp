@@ -69,7 +69,7 @@ void ControlPanel::selectScene(int index)
         btn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff000000));
     };
 
-    const char* names[] = { "Kill Room", "Analyzer", "Acidwarp" };
+    const char* names[] = { "Kill Room", "Analyzer", "Doom Spectrum" };
 
     switch (index)
     {

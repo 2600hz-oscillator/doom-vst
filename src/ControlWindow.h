@@ -18,7 +18,7 @@ public:
 private:
     juce::TextButton sceneA { "Kill Room" };
     juce::TextButton sceneB { "Analyzer" };
-    juce::TextButton sceneC { "Acidwarp" };
+    juce::TextButton sceneC { "Doom Spectrum" };
     juce::Label sceneLabel { {}, "Scene:" };
     juce::Label activeLabel { {}, "Kill Room" };
 
