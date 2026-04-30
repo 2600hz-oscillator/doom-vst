@@ -28,7 +28,7 @@ ControlPanel::ControlPanel()
     sceneA.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff4444));
     sceneA.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff000000));
 
-    setSize(280, 120);
+    setSize(340, 120);
 }
 
 void ControlPanel::resized()
@@ -69,7 +69,7 @@ void ControlPanel::selectScene(int index)
         btn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff000000));
     };
 
-    const char* names[] = { "Kill Room", "Spectrum", "Analyzer" };
+    const char* names[] = { "Kill Room", "Analyzer", "Acidwarp" };
 
     switch (index)
     {

@@ -1,144 +1,121 @@
 # DoomViz
 
-A VST3/AU music visualizer plugin that embeds the Doom (1994) software renderer and drives it from real-time audio and MIDI input. Load it as an effect in your DAW, route audio through it, and watch E1M1 come alive with your music.
+A VST3 / AU music visualizer that drives the Doom (1994) software renderer from real-time audio and MIDI. Drop it on a track, your music animates E1M1.
 
-Built on the stripped [linuxdoom-1.10](https://github.com/id-Software/DOOM) renderer, [JUCE](https://juce.com/) for the plugin framework, and [yaml-cpp](https://github.com/jbeder/yaml-cpp) for configuration.
+Built on stripped [linuxdoom-1.10](https://github.com/id-Software/DOOM), [JUCE](https://juce.com/), and [yaml-cpp](https://github.com/jbeder/yaml-cpp).
 
 ## Screenshots
 
-| Analyzer Scene | Sprite Spectrum | Kill Room |
-|---|---|---|
-| ![Analyzer](docs/images/analyzer_scene.png) | ![Spectrum](docs/images/spectrum_scene.png) | ![E1M1](docs/images/e1m1_test.png) |
-
-## How It Works
-
-Audio flows through the plugin unchanged while a parallel analysis pipeline extracts:
-- **FFT spectrum** (2048-sample, 16 log-spaced frequency bands from 20Hz to 20kHz)
-- **Time-domain RMS** level with envelope follower
-- **Onset detection** via spectral flux
-- **MIDI state** (note velocity, CC values, program change, clock)
-
-A YAML routing engine maps these signals to visual parameters. Three scenes read the parameter map each frame to drive the Doom renderer in different ways.
-
-```
-Audio In -> FFT/RMS/Onset -> Signal Router -> Scene Controller -> Doom Renderer -> OpenGL Texture
-MIDI In  -> Note/CC/PC    ->      ^                                                     |
-                              YAML Config                                          Plugin Window
-```
-
-## Visualizer Scenes
-
-### Kill Room (Scene A — default)
-Auto-navigates E1M1 with collision-checked movement. Audio onsets spawn monsters (imps, zombiemen, shotgun guys) directly ahead of the player. When monsters are nearby and audio is playing, the player faces them and fires the shotgun. Sector lighting pulses with RMS level. Camera speed increases with audio energy. Player has god mode and infinite ammo. Monsters are non-solid so the player walks through them.
-
-### Sprite Spectrum (Scene B)
-A 2D visualizer that decodes actual Doom imp sprites from the WAD's patch data and draws them scaled by frequency band amplitude. 8 bands from sub-bass to air, each represented by a real imp sprite ranging from 0.5x scale at silence to 3x at full amplitude. Dark background with Doom palette colors.
-
-### Analyzer Room (Scene C)
-Walks through E1M1 holding the BFG9000 while an 8-band FFT spectrum is injected onto the STARTAN3 wall texture in real-time. Each band has a distinct color (red, orange, yellow, green, cyan, blue, purple, magenta). Movement speed is driven by the sub-bass (red) band — bass hits make you move, silence keeps you still. Collision-checked navigation with wall avoidance.
-
-Switch scenes via the floating control window or MIDI Program Change (0/1/2).
-
-### Scene Isolation
-Each scene switch fully reloads the E1M1 map, resetting all engine state (monsters, textures, sectors, weapons). No state bleeds between scenes.
-
-## E1M1 Test Renders
-
-Deterministic baseline renders from the test suite:
-
-| E1M1 Starting View | E1M1 With Spawned Imps |
+| Analyzer | Kill Room |
 |---|---|
-| ![E1M1](docs/images/e1m1_test.png) | ![E1M1 with imps](docs/images/e1m1_with_imp.png) |
+| ![Analyzer](docs/images/analyzer_scene.png) | ![E1M1](docs/images/e1m1_test.png) |
 
-## Building
+## Scenes
 
-### Prerequisites
+Three modes, switched via the floating control window or MIDI Program Change (0/1/2). Each switch reloads the map for full state isolation.
 
-- macOS with Apple Clang (Xcode Command Line Tools)
-- [Flox](https://flox.dev/) for dependency management
-- DOOM1.WAD (shareware) in `resources/`
+### Kill Room (PC 0)
+Walks E1M1 with the shotgun. Audio onsets spawn monsters in front of the player. Auto-fires at nearby enemies while audio is playing. Sector lighting pulses with RMS. God mode + infinite ammo. Monsters are non-solid so the player walks through them.
 
-### Build Steps
+### Analyzer (PC 1)
+Walks E1M1 with the BFG9000. Eight audio bands are injected as colored bars onto the `STARTAN3` wall texture in real time. Player movement speed tracks the sub-bass band &mdash; bass moves you, silence stops you.
+
+### Acidwarp (PC 2)
+2D mode. Pulsing audio-driven warp pattern (layered sin/cos + radial fields) behind eight Doom sprites scaled by frequency band. Each band parameter (zoom, swirl rate, color shift, intensity) is locked to a different band envelope, so the visual moves *with* the music. Sprites: Doom marine (bands 0-1, bass), imp (bands 2-5, mids), zombieman (band 6), shotgun guy (band 7). Onsets jolt the palette.
+
+## How it works
+
+```
+Audio In -> FFT / RMS / Onset -> Signal Router -> Scene -> Doom renderer -> OpenGL texture
+MIDI In  -> Note / CC / PC    -> Signal Router -> Scene -> Doom renderer -> OpenGL texture
+                                       ^                          |
+                                  YAML config                  Plugin window
+```
+
+Audio passes through unchanged. The plugin is purely visual.
+
+### Audio analysis
+
+- **FFT**: 2048-sample Hann window, 16 log-spaced bands (20Hz&ndash;20kHz)
+- **RMS**: time-domain, with per-band envelope follower
+- **Onsets**: spectral flux transient detection
+- **MIDI**: note velocity, 128 CCs, program change, MIDI clock
+
+Audio thread to render thread is lock-free (`juce::AbstractFifo` ring buffer + atomic MIDI state).
+
+### YAML routing (optional)
+
+Configs in `config/` map analyzer outputs to scene parameters. Without a config, sane audio defaults are auto-wired.
+
+```yaml
+inputs:
+  kick_env:
+    source: audio
+    mode: band_rms
+    band: [20, 200]
+    smoothing: 0.05
+    gain: 2.0
+routes:
+  - from: kick_env
+    to: sector_light.all
+    scale: 1.0
+```
+
+## Building (macOS)
+
+Requires Apple Clang + [Flox](https://flox.dev/).
 
 ```bash
-# Clone with submodules
-git clone --recursive <repo-url>
-cd doom_viz
-
-# Activate the flox environment (provides cmake, git-lfs, python3)
-flox activate
-
-# Configure (must use Apple Clang for JUCE Objective-C++ support)
+git clone --recursive <repo>
+cd doom_viz && flox activate
 mkdir -p build && cd build
 cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
 cd ..
-
-# Build standalone app
-flox activate -- cmake --build build -j1 --target DoomViz_Standalone
-
-# Build VST3 plugin
 flox activate -- cmake --build build -j1 --target DoomViz_VST3
-
-# Install VST3
 cp -R build/DoomViz_artefacts/VST3/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/
 codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/DoomViz.vst3
 ```
 
-The DOOM1.WAD is automatically bundled into the plugin's Resources during build.
+`DOOM1.WAD` (shareware) is auto-bundled into the plugin during build.
 
-### Run Tests
+### Tests
 
 ```bash
 flox activate -- bash -c 'cd build && ctest --output-on-failure'
 ```
 
-## Usage in a DAW
+The render baseline test verifies the renderer is byte-deterministic against committed PPMs.
 
-1. Build and install the VST3 (see above)
-2. Add DoomViz as an effect on an audio track
-3. Route audio through the track — audio passes through unchanged
-4. The plugin window shows the Doom renderer reacting to your audio
-5. A floating "DoomViz Controls" window appears for scene switching
-6. Or send MIDI Program Change 0/1/2 to switch scenes
-
-### YAML Configuration
-
-Scene routing is configured via YAML files in `config/`. The default config maps:
-- Low frequency band RMS (20-200Hz) to sector lighting
-- Audio onsets to monster spawning
-- Overall RMS to camera shake and player speed
-- MIDI velocity to lighting boost
-- MIDI CC1 to palette flash
-
-See `config/default_killroom.yaml` for the full schema.
-
-## Architecture
+## Project layout
 
 ```
-doom_viz/
-  libs/doom_renderer/     # Stripped linuxdoom-1.10 as a static C library
-  src/
-    PluginProcessor.*     # JUCE AudioProcessor (audio pass-through + analysis)
-    PluginEditor.*        # JUCE editor window
-    DoomViewport.*        # OpenGL renderer (texture upload + aspect scaling)
-    ControlWindow.*       # Floating control panel (separate OS window)
-    audio/                # SignalBus, AudioAnalyzer, MidiHandler
-    routing/              # YAML-driven SignalRouter + RouteConfig
-    scenes/               # Scene interface + KillRoom, SpriteSpectrum, AnalyzerRoom
-    doom/                 # DoomEngine C++ wrapper
-  config/                 # YAML scene configs
-  test/                   # Render test harness + baselines + test audio
-  extern/                 # JUCE and yaml-cpp submodules
+libs/doom_renderer/   stripped linuxdoom-1.10 as a static C library
+src/
+  PluginProcessor.*   JUCE AudioProcessor (pass-through + analysis)
+  PluginEditor.*      editor window
+  DoomViewport.*      OpenGL viewport: texture upload, aspect scaling
+  ControlWindow.*     floating scene-switcher in a separate OS window
+  audio/              SignalBus, AudioAnalyzer, MidiHandler
+  routing/            YAML SignalRouter + RouteConfig
+  scenes/             Scene base + KillRoom, AnalyzerRoom, Spectrum2
+  doom/               C++ wrapper around the C renderer
+config/               default YAML configs
+test/                 render harness + baseline PPMs + test audio
+extern/               JUCE and yaml-cpp submodules
 ```
 
-### Key APIs Added to Doom Renderer
+## Doom renderer extensions
 
-- `doom_move_player()` — collision-checked movement via P_TryMove
-- `doom_set_camera_angle()` — angle-only update without blockmap relinking
-- `doom_set_wall_texture_data()` — inject custom pixel data onto wall textures
-- `doom_fire_weapon()` / `doom_give_weapon()` — weapon control
-- `doom_set_god_mode()` / `doom_respawn_player()` — invulnerability
+The C renderer was extended with:
+
+- `doom_move_player` &mdash; collision-checked movement via `P_TryMove`
+- `doom_set_camera_angle` &mdash; rotate without relinking the blockmap
+- `doom_set_wall_texture_data` &mdash; replace a wall texture's column data at runtime
+- `doom_set_flat_data` &mdash; replace a floor / ceiling flat
+- `doom_get_sprite` &mdash; pull raw `patch_t` data for sprite drawing
+- `doom_fire_weapon` / `doom_give_weapon` &mdash; weapon control
+- `doom_set_god_mode` / `doom_respawn_player` &mdash; player state
 
 ## License
 
-The Doom source code is released under the [GPL](https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/DOOMLIC.TXT). DOOM1.WAD (shareware) is freely redistributable per id Software's original terms. This project is open source and noncommercial.
+Doom source is GPL. `DOOM1.WAD` (shareware) is freely redistributable per id Software's terms. This project is open source and noncommercial.

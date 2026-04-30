@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoomViz - Doom Music Visualizer VST</title>
+    <title>DoomViz — Doom Music Visualizer VST</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -38,29 +38,6 @@
         a:hover { text-decoration: underline; }
         ul { margin: 10px 0 10px 20px; }
         li { margin-bottom: 6px; }
-        .hero-screenshots {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 30px 0;
-        }
-        .hero-screenshots figure {
-            text-align: center;
-            flex: 1;
-            min-width: 280px;
-        }
-        .hero-screenshots img {
-            image-rendering: pixelated;
-            width: 100%;
-            max-width: 460px;
-            border: 2px solid #444;
-        }
-        .hero-screenshots figcaption {
-            color: #888;
-            margin-top: 8px;
-            font-size: 0.9em;
-        }
         .scene-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -129,76 +106,60 @@
 <body>
     <div class="container">
         <h1>DOOMVIZ</h1>
-        <p class="subtitle">A VST3/AU music visualizer powered by the Doom (1994) renderer</p>
+        <p class="subtitle">A VST3 / AU music visualizer driving the Doom (1994) renderer</p>
 
-        <div class="hero-screenshots">
-            <figure>
-                <img src="images/analyzer_scene.png" alt="Analyzer scene with FFT on walls">
-                <figcaption>Analyzer: FFT spectrum on E1M1 wall textures</figcaption>
-            </figure>
-            <figure>
-                <img src="images/spectrum_scene.png" alt="Sprite spectrum with Doom imps">
-                <figcaption>Spectrum: Doom imp sprites scaled by frequency</figcaption>
-            </figure>
-        </div>
+        <h2>What it is</h2>
+        <p>Drop DoomViz on a track. Your music animates E1M1. Audio passes through unchanged &mdash;
+        the plugin is purely visual. A floating control window switches scenes without covering the
+        renderer, so you can put the visual on a separate display.</p>
 
-        <h2>What Is This?</h2>
-        <p>DoomViz is an open-source VST3/AU plugin that embeds the Doom (1994) software renderer
-        and drives it from real-time audio and MIDI input. Load it as an effect in your DAW, route
-        audio through it, and watch E1M1 come alive with your music.</p>
-        <p>Audio passes through unchanged &mdash; DoomViz is purely visual. A floating control window
-        lets you switch scenes without covering the visualizer, so you can put the renderer on a
-        separate display.</p>
-
-        <h2>Visualizer Scenes</h2>
+        <h2>Scenes</h2>
         <div class="scene-grid">
             <div class="scene-card">
                 <span class="tag">PC 0</span>
                 <img src="images/e1m1_test.png" alt="Kill Room">
                 <h3>Kill Room</h3>
-                <p>Auto-navigates E1M1 with collision detection. Audio onsets spawn monsters ahead of
-                the player. Player faces and shoots nearby enemies with the shotgun when audio is playing.
-                Sector lighting pulses with RMS level. God mode, infinite ammo.</p>
+                <p>Walks E1M1 with the shotgun. Audio onsets spawn monsters in front of the player.
+                Auto-fires at nearby enemies while audio is playing. Sector lighting pulses with RMS.
+                God mode, infinite ammo, monsters are non-solid.</p>
             </div>
             <div class="scene-card">
                 <span class="tag">PC 1</span>
-                <img src="images/spectrum_scene.png" alt="Sprite Spectrum">
-                <h3>Sprite Spectrum</h3>
-                <p>2D visualizer using real Doom imp sprites decoded from WAD patch data. 8 frequency
-                bands from sub-bass to air, each rendered as a scaled imp sprite (0.5x&ndash;3x based
-                on amplitude).</p>
+                <img src="images/analyzer_scene.png" alt="Analyzer">
+                <h3>Analyzer</h3>
+                <p>Walks E1M1 with the BFG9000. Eight audio bands are injected as colored bars onto
+                the <code>STARTAN3</code> wall texture in real time. Player movement speed tracks
+                the sub-bass band &mdash; bass moves you, silence stops you.</p>
             </div>
             <div class="scene-card">
                 <span class="tag">PC 2</span>
-                <img src="images/analyzer_scene.png" alt="Analyzer Room">
-                <h3>Analyzer Room</h3>
-                <p>Walks through E1M1 holding the BFG9000 while an 8-band FFT spectrum is injected onto
-                wall textures in real-time. Each band has a distinct color. Movement speed is driven by
-                sub-bass &mdash; bass hits make you move, silence keeps you still.</p>
+                <h3>Acidwarp</h3>
+                <p>2D mode. Pulsing audio-driven warp pattern behind eight Doom sprites scaled by
+                frequency: marine (bass), imp (mids), zombieman + shotgun guy (highs). Each warp
+                parameter is locked to a different band envelope, so the pattern moves with the music.</p>
             </div>
         </div>
-        <p>Switch scenes via the floating control window or MIDI Program Change (0, 1, or 2).
-        Each switch fully reloads the map &mdash; no state bleeds between scenes.</p>
+        <p>Switch scenes via the floating control window or MIDI Program Change. Each switch reloads
+        the map for full state isolation &mdash; no state bleeds between scenes.</p>
 
-        <h2>Signal Flow</h2>
-        <div class="arch-diagram">Audio In &rarr; FFT / RMS / Onset &rarr; Signal Router &rarr; Scene Controller &rarr; Doom Renderer &rarr; OpenGL
-MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                                                    &darr;
-                                   YAML Config                                             Plugin Window</div>
+        <h2>Signal flow</h2>
+        <div class="arch-diagram">Audio In &rarr; FFT / RMS / Onset &rarr; Signal Router &rarr; Scene &rarr; Doom renderer &rarr; OpenGL
+MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                                              &darr;
+                                   YAML config                                       Plugin window</div>
 
-        <h2>Audio Analysis Pipeline</h2>
+        <h2>Audio analysis</h2>
         <ul>
             <li><strong>FFT</strong> &mdash; 2048-sample Hann window, 16 log-spaced bands (20Hz&ndash;20kHz)</li>
-            <li><strong>Time-domain RMS</strong> &mdash; computed from raw samples, not FFT magnitudes</li>
-            <li><strong>Envelope follower</strong> &mdash; per-band with configurable attack/release</li>
-            <li><strong>Onset detection</strong> &mdash; spectral flux transient trigger for monster spawning</li>
-            <li><strong>MIDI</strong> &mdash; note velocity, 128 CC values, program change, MIDI clock for BPM sync</li>
+            <li><strong>RMS</strong> &mdash; time-domain, with per-band envelope follower</li>
+            <li><strong>Onsets</strong> &mdash; spectral flux transient detection</li>
+            <li><strong>MIDI</strong> &mdash; note velocity, 128 CCs, program change, MIDI clock</li>
         </ul>
-        <p>Audio&rarr;render thread communication is lock-free via <code>juce::AbstractFifo</code> ring buffer
+        <p>Audio thread to render thread is lock-free via <code>juce::AbstractFifo</code> ring buffer
         and atomic MIDI state.</p>
 
-        <h2>YAML Routing</h2>
-        <p>A YAML config maps analyzed signals to scene parameters with per-channel gain, offset,
-        smoothing, and per-route scale with blend modes (replace, add, multiply, max).</p>
+        <h2>YAML routing</h2>
+        <p>Optional configs in <code>config/</code> map analyzer outputs to scene parameters with per-channel
+        gain, offset, smoothing, and per-route blend modes. Without a config, sane audio defaults are auto-wired.</p>
 <pre>inputs:
   kick_env:
     source: audio
@@ -206,51 +167,47 @@ MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                            
     band: [20, 200]
     smoothing: 0.05
     gain: 2.0
-
 routes:
   - from: kick_env
     to: sector_light.all
     scale: 1.0</pre>
-        <p>Without a config loaded, the plugin auto-wires audio analysis directly to scene parameters.</p>
 
-        <h2>Doom Engine Extensions</h2>
-        <p>The stripped linuxdoom-1.10 renderer has been ported to 64-bit macOS and extended with:</p>
+        <h2>Doom renderer extensions</h2>
+        <p>The stripped linuxdoom-1.10 renderer was ported to 64-bit macOS and extended with:</p>
         <ul>
-            <li><code>doom_move_player()</code> &mdash; collision-checked movement via P_TryMove</li>
-            <li><code>doom_set_camera_angle()</code> &mdash; angle-only update (no blockmap relinking)</li>
-            <li><code>doom_set_wall_texture_data()</code> &mdash; inject custom pixel data onto wall textures</li>
-            <li><code>doom_fire_weapon()</code> / <code>doom_give_weapon()</code> &mdash; weapon control</li>
-            <li><code>doom_set_god_mode()</code> / <code>doom_respawn_player()</code> &mdash; invulnerability</li>
+            <li><code>doom_move_player</code> &mdash; collision-checked movement via <code>P_TryMove</code></li>
+            <li><code>doom_set_camera_angle</code> &mdash; rotate without relinking the blockmap</li>
+            <li><code>doom_set_wall_texture_data</code> &mdash; replace a wall texture's column data at runtime</li>
+            <li><code>doom_set_flat_data</code> &mdash; replace a floor / ceiling flat</li>
+            <li><code>doom_get_sprite</code> &mdash; pull raw <code>patch_t</code> data</li>
+            <li><code>doom_fire_weapon</code> / <code>doom_give_weapon</code></li>
+            <li><code>doom_set_god_mode</code> / <code>doom_respawn_player</code></li>
         </ul>
 
-        <h2>Building</h2>
-        <p>Requires macOS with Apple Clang and <a href="https://flox.dev/">Flox</a> for dependency management.</p>
-<pre>git clone --recursive &lt;repo-url&gt;
+        <h2>Building (macOS)</h2>
+<pre>git clone --recursive &lt;repo&gt;
 cd doom_viz && flox activate
-
 mkdir -p build && cd build
 cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang \
          -DCMAKE_CXX_COMPILER=/usr/bin/clang++
 cd ..
-
 flox activate -- cmake --build build -j1 --target DoomViz_VST3
 cp -R build/DoomViz_artefacts/VST3/DoomViz.vst3 \
       ~/Library/Audio/Plug-Ins/VST3/
 codesign --force --deep --sign - \
       ~/Library/Audio/Plug-Ins/VST3/DoomViz.vst3</pre>
-        <p>DOOM1.WAD (shareware) is automatically bundled into the plugin during build.</p>
+        <p><code>DOOM1.WAD</code> (shareware) is auto-bundled into the plugin during build.</p>
 
-        <h2>Tech Stack</h2>
+        <h2>Stack</h2>
         <ul>
-            <li><strong>Doom renderer</strong> &mdash; Stripped <a href="https://github.com/id-Software/DOOM">linuxdoom-1.10</a>, ported to 64-bit macOS</li>
+            <li><strong>Renderer</strong> &mdash; stripped <a href="https://github.com/id-Software/DOOM">linuxdoom-1.10</a>, ported to 64-bit macOS</li>
             <li><strong>Plugin framework</strong> &mdash; <a href="https://juce.com/">JUCE</a> (VST3, AU, Standalone)</li>
             <li><strong>Config</strong> &mdash; <a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></li>
-            <li><strong>Rendering</strong> &mdash; 320&times;200 indexed framebuffer &rarr; RGBA &rarr; OpenGL texture (nearest-neighbor)</li>
-            <li><strong>Audio transport</strong> &mdash; Lock-free ring buffer + atomic MIDI state</li>
+            <li><strong>Display</strong> &mdash; 320&times;200 indexed framebuffer &rarr; RGBA &rarr; OpenGL texture (nearest-neighbor)</li>
         </ul>
 
         <footer>
-            <p>Open source &amp; noncommercial. Doom source code is GPL. DOOM1.WAD (shareware) is freely redistributable.</p>
+            <p>Open source &amp; noncommercial. Doom source is GPL. <code>DOOM1.WAD</code> (shareware) is freely redistributable.</p>
         </footer>
     </div>
 </body>

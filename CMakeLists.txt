@@ -41,8 +41,8 @@ target_sources(DoomViz PRIVATE
     src/routing/SignalRouter.cpp
     src/scenes/SceneManager.cpp
     src/scenes/KillRoomScene.cpp
-    src/scenes/SpriteSpectrumScene.cpp
     src/scenes/AnalyzerRoomScene.cpp
+    src/scenes/Spectrum2Scene.cpp
 )
 
 target_include_directories(DoomViz PRIVATE

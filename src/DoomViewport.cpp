@@ -1,7 +1,7 @@
 #include "DoomViewport.h"
 #include "scenes/KillRoomScene.h"
-#include "scenes/SpriteSpectrumScene.h"
 #include "scenes/AnalyzerRoomScene.h"
+#include "scenes/Spectrum2Scene.h"
 
 DoomViewport::DoomViewport(SignalBus& bus, double sampleRate,
                            std::atomic<int>* sceneOverride)
@@ -103,8 +103,8 @@ void DoomViewport::newOpenGLContextCreated()
 
     // Set up scenes
     sceneManager.addScene(std::make_unique<KillRoomScene>());
-    sceneManager.addScene(std::make_unique<SpriteSpectrumScene>());
     sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
+    sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer));
 
     if (engine->isMapLoaded())
         sceneManager.init(*engine);
