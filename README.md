@@ -6,9 +6,9 @@ Built on stripped [linuxdoom-1.10](https://github.com/id-Software/DOOM), [JUCE](
 
 ## Screenshots
 
-| Analyzer | Kill Room |
-|---|---|
-| ![Analyzer](docs/images/analyzer_scene.png) | ![E1M1](docs/images/e1m1_test.png) |
+| Doom Spectrum | Analyzer | Kill Room |
+|---|---|---|
+| ![Doom Spectrum](docs/images/doom_spectrum_scene.png) | ![Analyzer](docs/images/analyzer_scene.png) | ![E1M1](docs/images/e1m1_test.png) |
 
 ## Scenes
 
