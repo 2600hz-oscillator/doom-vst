@@ -37,6 +37,8 @@ private:
     std::array<float, kNumDisplayBands> bandAmplitudes {};
     // Per-band slider gain pulled from settings each Apply (0..1).
     std::array<float, kNumDisplayBands> bandGains01 {};
+    // Per-band sprite ID pulled from settings each frame.
+    std::array<int,   kNumDisplayBands> bandSpriteIds {};
     float overallRMS = 0.0f;
     bool onsetTrigger = false;
 
@@ -51,23 +53,6 @@ private:
     // Sine LUT for fast pattern generation
     static constexpr int kSinTableSize = 1024;
     std::array<float, kSinTableSize> sinTable {};
-
-    // Sprite per band: cacodemon, imp, zombieman, shotgun guy
-    static constexpr int kSpritePlay = 28;  // Doom marine (player)
-    static constexpr int kSpriteTroop = 0;  // Imp
-    static constexpr int kSpritePoss = 29;  // Zombieman
-    static constexpr int kSpriteSpos = 30;  // Shotgun guy
-
-    static constexpr int kBandSprites[kNumDisplayBands] = {
-        kSpritePlay,  // 0: sub-bass — Doom marine
-        kSpritePlay,  // 1: bass — Doom marine
-        kSpriteTroop, // 2: low-mid — imp
-        kSpriteTroop, // 3: mid — imp
-        kSpriteTroop, // 4: upper-mid — imp
-        kSpriteTroop, // 5: presence — imp
-        kSpritePoss,  // 6: brilliance — zombieman
-        kSpriteSpos,  // 7: air — shotgun guy
-    };
 
     void initSinTable();
     void loadPalette(DoomEngine& engine);

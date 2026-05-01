@@ -80,6 +80,7 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     {
         const auto& cfg = snap.bands[static_cast<size_t>(i)];
         bandGains01[static_cast<size_t>(i)] = cfg.gain01;
+        bandSpriteIds[static_cast<size_t>(i)] = cfg.spriteId;
 
         int lowBin = std::max(1, static_cast<int>(cfg.lowHz / binWidth));
         int highBin = std::min(specSize - 1, static_cast<int>(cfg.highHz / binWidth));
@@ -292,7 +293,7 @@ const uint8_t* Spectrum2Scene::render(DoomEngine& engine)
         if (amp < 0.01f) continue;
 
         int centerX = bandWidth / 2 + i * bandWidth;
-        int spriteId = kBandSprites[i];
+        int spriteId = bandSpriteIds[static_cast<size_t>(i)];
 
         doom_sprite_t spr = doom_get_sprite(spriteId, 0, 0);
         if (spr.patch_data != nullptr)

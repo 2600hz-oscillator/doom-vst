@@ -1,6 +1,6 @@
 #include "SpectrumPatchPanel.h"
 #include "PatchSettingsStore.h"
-#include <algorithm>
+#include "SpriteCatalog.h"
 
 namespace patch
 {
@@ -12,9 +12,52 @@ namespace
     constexpr int kFooterHeight = 36;
     constexpr int kPad = 10;
 
-    constexpr int kColLabelW = 36;
-    constexpr int kColHzW    = 70;
-    constexpr int kColGapW   = 6;
+    constexpr int kColLabelW  = 36;
+    constexpr int kColHzW     = 70;
+    constexpr int kColSpriteW = 150;
+    constexpr int kColGapW    = 6;
+
+    // ComboBox uses 1-based item IDs (0 == "no selection"); add a fixed
+    // offset so the menu IDs are 1..N instead of 0..N-1.
+    constexpr int kComboIdOffset = 1;
+
+    void populateSpriteCombo(juce::ComboBox& combo)
+    {
+        SpriteCategory currentCat = SpriteCategory::Character;
+        bool first = true;
+        for (size_t i = 0; i < kSpriteCatalog.size(); ++i)
+        {
+            const auto& e = kSpriteCatalog[i];
+            if (first || e.category != currentCat)
+            {
+                const char* heading =
+                    e.category == SpriteCategory::Character ? "Characters"
+                  : e.category == SpriteCategory::Gun       ? "Guns"
+                  : e.category == SpriteCategory::Powerup   ? "Powerups"
+                  :                                           "Armor";
+                combo.addSectionHeading(heading);
+                currentCat = e.category;
+                first = false;
+            }
+            combo.addItem(e.niceName, static_cast<int>(i) + kComboIdOffset);
+        }
+    }
+
+    int spriteIdToComboItemId(int spriteId)
+    {
+        for (size_t i = 0; i < kSpriteCatalog.size(); ++i)
+            if (kSpriteCatalog[i].id == spriteId)
+                return static_cast<int>(i) + kComboIdOffset;
+        return 0;  // not found
+    }
+
+    int comboItemIdToSpriteId(int itemId, int fallback)
+    {
+        int idx = itemId - kComboIdOffset;
+        if (idx < 0 || idx >= static_cast<int>(kSpriteCatalog.size()))
+            return fallback;
+        return kSpriteCatalog[static_cast<size_t>(idx)].id;
+    }
 }
 
 SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
@@ -28,10 +71,11 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
         l.setJustificationType(juce::Justification::centredLeft);
         addAndMakeVisible(l);
     };
-    styleHeader(headerBand, "Band");
-    styleHeader(headerLow,  "Low Hz");
-    styleHeader(headerHigh, "High Hz");
-    styleHeader(headerGain, "Gain");
+    styleHeader(headerBand,   "Band");
+    styleHeader(headerLow,    "Low Hz");
+    styleHeader(headerHigh,   "High Hz");
+    styleHeader(headerGain,   "Gain");
+    styleHeader(headerSprite, "Sprite");
 
     for (int i = 0; i < kSpectrumNumBands; ++i)
     {
@@ -65,6 +109,14 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
         r.gain.setColour(juce::Slider::thumbColourId, juce::Colour(0xffeeeeee));
         r.gain.onValueChange = [this]() { markDirty(); };
         addAndMakeVisible(r.gain);
+
+        r.sprite.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff222222));
+        r.sprite.setColour(juce::ComboBox::textColourId, juce::Colour(0xffeeeeee));
+        r.sprite.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff444444));
+        r.sprite.setColour(juce::ComboBox::arrowColourId, juce::Colour(0xffcccccc));
+        populateSpriteCombo(r.sprite);
+        r.sprite.onChange = [this]() { markDirty(); };
+        addAndMakeVisible(r.sprite);
     }
 
     applyBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff333333));
@@ -80,8 +132,8 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
     addAndMakeVisible(revertBtn);
 
     // Drive the size of the hosting window via setContentNonOwned. Sized to
-    // fit 8 band rows + header + footer + padding.
-    setSize(480, 340);
+    // fit 8 band rows + header + footer + padding (with the new Sprite column).
+    setSize(640, 340);
 
     loadFromStore();
 }
@@ -105,6 +157,8 @@ void SpectrumPatchPanel::resized()
     headerRow.removeFromLeft(kColGapW);
     headerHigh.setBounds(headerRow.removeFromLeft(kColHzW));
     headerRow.removeFromLeft(kColGapW);
+    headerSprite.setBounds(headerRow.removeFromRight(kColSpriteW));
+    headerRow.removeFromRight(kColGapW);
     headerGain.setBounds(headerRow);
 
     area.removeFromTop(4);
@@ -121,6 +175,8 @@ void SpectrumPatchPanel::resized()
         row.removeFromLeft(kColGapW);
         r.highHz.setBounds(row.removeFromLeft(kColHzW));
         row.removeFromLeft(kColGapW);
+        r.sprite.setBounds(row.removeFromRight(kColSpriteW));
+        row.removeFromRight(kColGapW);
         r.gain.setBounds(row);
     }
 
@@ -153,6 +209,9 @@ SpectrumSettings SpectrumPatchPanel::buildSettingsFromUI() const
         out.bands[static_cast<size_t>(i)].highHz = hi;
         out.bands[static_cast<size_t>(i)].gain01 =
             juce::jlimit(0.0f, 1.0f, static_cast<float>(r.gain.getValue()));
+        out.bands[static_cast<size_t>(i)].spriteId =
+            comboItemIdToSpriteId(r.sprite.getSelectedId(),
+                                  out.bands[static_cast<size_t>(i)].spriteId);
     }
     return out;
 }
@@ -170,6 +229,9 @@ void SpectrumPatchPanel::writeSettingsToUI(const SpectrumSettings& s)
                          juce::dontSendNotification);
         r.gain.setValue(static_cast<double>(s.bands[static_cast<size_t>(i)].gain01),
                         juce::dontSendNotification);
+        int comboId = spriteIdToComboItemId(s.bands[static_cast<size_t>(i)].spriteId);
+        if (comboId > 0)
+            r.sprite.setSelectedId(comboId, juce::dontSendNotification);
     }
 }
 

@@ -12,7 +12,8 @@ struct SpectrumBand
 {
     float lowHz;
     float highHz;
-    float gain01;  // [0, 1]
+    float gain01;   // [0, 1]
+    int   spriteId; // matches SPR_* enum order in linuxdoom info.h
 };
 
 constexpr int  kSpectrumNumBands = 8;
@@ -29,16 +30,19 @@ struct SpectrumSettings
         // with kSpectrumMaxGain = 4.0 gives a peak sprite scale of 3.0 at
         // band amplitude 1.0, matching the prior `0.5 + amp * 2.5` peak so
         // default visuals stay close.
+        // Default sprite per band matches the prior hardcoded `kBandSprites`
+        // array: PLAY (28), PLAY (28), TROO (0), TROO (0), TROO (0), TROO (0),
+        // POSS (29), SPOS (30).
         SpectrumSettings s {};
         s.bands = { {
-            { 20.0f,    80.0f,    0.75f },
-            { 80.0f,    315.0f,   0.75f },
-            { 315.0f,   1250.0f,  0.75f },
-            { 1250.0f,  5000.0f,  0.75f },
-            { 5000.0f,  10000.0f, 0.75f },
-            { 10000.0f, 14000.0f, 0.75f },
-            { 14000.0f, 18000.0f, 0.75f },
-            { 18000.0f, 20000.0f, 0.75f },
+            { 20.0f,    80.0f,    0.75f, 28 },
+            { 80.0f,    315.0f,   0.75f, 28 },
+            { 315.0f,   1250.0f,  0.75f,  0 },
+            { 1250.0f,  5000.0f,  0.75f,  0 },
+            { 5000.0f,  10000.0f, 0.75f,  0 },
+            { 10000.0f, 14000.0f, 0.75f,  0 },
+            { 14000.0f, 18000.0f, 0.75f, 29 },
+            { 18000.0f, 20000.0f, 0.75f, 30 },
         } };
         return s;
     }

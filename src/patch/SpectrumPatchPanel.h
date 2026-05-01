@@ -36,12 +36,13 @@ private:
         juce::TextEditor lowHz;
         juce::TextEditor highHz;
         juce::Slider   gain;
+        juce::ComboBox sprite;
     };
 
     PatchSettingsStore& store;
     std::array<BandRow, kSpectrumNumBands> rows;
 
-    juce::Label headerBand, headerLow, headerHigh, headerGain;
+    juce::Label headerBand, headerLow, headerHigh, headerGain, headerSprite;
     juce::TextButton applyBtn { "Apply" };
     juce::TextButton revertBtn { "Revert" };
 
