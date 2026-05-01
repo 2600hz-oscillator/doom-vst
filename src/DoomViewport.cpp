@@ -18,6 +18,12 @@ DoomViewport::~DoomViewport()
     glContext.detach();
 }
 
+void DoomViewport::mouseDoubleClick(const juce::MouseEvent&)
+{
+    if (onDoubleClick)
+        onDoubleClick();
+}
+
 void DoomViewport::setSampleRate(double sr)
 {
     analyzer.setSampleRate(sr);
@@ -89,29 +95,33 @@ void DoomViewport::loadDefaultConfig()
 
 void DoomViewport::newOpenGLContextCreated()
 {
-    engine = std::make_unique<DoomEngine>();
-
-    auto wadPath = findWadPath();
-    if (wadPath.isNotEmpty() && engine->init(wadPath.toStdString()))
+    // Only init the doom engine + scenes once. Context recreation (e.g. when
+    // the viewport is reparented for fullscreen) must not reset visualizer state.
+    if (! engine)
     {
-        engine->loadMap(1, 1);
+        engine = std::make_unique<DoomEngine>();
+
+        auto wadPath = findWadPath();
+        if (wadPath.isNotEmpty() && engine->init(wadPath.toStdString()))
+        {
+            engine->loadMap(1, 1);
+        }
+        else
+        {
+            DBG("DoomViewport: Could not find or load DOOM1.WAD");
+        }
+
+        sceneManager.addScene(std::make_unique<KillRoomScene>());
+        sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
+        sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer));
+
+        if (engine->isMapLoaded())
+            sceneManager.init(*engine);
+
+        loadDefaultConfig();
+
+        lastFrameTime = juce::Time::getMillisecondCounterHiRes() / 1000.0;
     }
-    else
-    {
-        DBG("DoomViewport: Could not find or load DOOM1.WAD");
-    }
-
-    // Set up scenes
-    sceneManager.addScene(std::make_unique<KillRoomScene>());
-    sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
-    sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer));
-
-    if (engine->isMapLoaded())
-        sceneManager.init(*engine);
-
-    loadDefaultConfig();
-
-    lastFrameTime = juce::Time::getMillisecondCounterHiRes() / 1000.0;
 
     juce::gl::glGenTextures(1, &textureId);
     juce::gl::glBindTexture(juce::gl::GL_TEXTURE_2D, textureId);
@@ -245,6 +255,6 @@ void DoomViewport::openGLContextClosing()
         juce::gl::glDeleteTextures(1, &textureId);
         textureId = 0;
     }
-
-    engine.reset();
+    // Don't reset engine — it must survive context recreation for fullscreen
+    // toggling. Engine cleanup happens in the destructor.
 }

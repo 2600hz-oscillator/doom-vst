@@ -53,6 +53,10 @@ tasks:
       - mkdir -p {{.DIST_DIR}}
       - rm -rf {{.DIST_DIR}}/{{.VST3_NAME}}
       - cp -R {{.BUILD_DIR}}/DoomViz_artefacts/VST3/{{.VST3_NAME}} {{.DIST_DIR}}/
+      # Strip iCloud / quarantine / fileprovider xattrs that get inherited
+      # when the source tree lives under ~/Documents (iCloud-synced). Bitwig
+      # and other hosts will silently skip plugins with these xattrs.
+      - xattr -cr {{.DIST_DIR}}/{{.VST3_NAME}}
       - codesign --force --deep --sign - {{.DIST_DIR}}/{{.VST3_NAME}}
       - echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
 
@@ -85,8 +89,10 @@ tasks:
     cmds:
       - rm -rf ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
       - cp -R {{.DIST_DIR}}/{{.VST3_NAME}} ~/Library/Audio/Plug-Ins/VST3/
+      # cp -R re-attaches the iCloud / fileprovider xattrs from the source
+      # tree, so strip them again at the install destination before signing.
+      - xattr -cr ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
       - codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
-      - "xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}} 2>/dev/null || true"
       - echo "Installed to ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}"
 
   test:

@@ -43,6 +43,7 @@ target_sources(DoomViz PRIVATE
     src/scenes/KillRoomScene.cpp
     src/scenes/AnalyzerRoomScene.cpp
     src/scenes/Spectrum2Scene.cpp
+    $<$<PLATFORM_ID:Darwin>:src/MacFullscreen.mm>
 )
 
 target_include_directories(DoomViz PRIVATE

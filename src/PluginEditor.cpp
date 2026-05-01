@@ -1,5 +1,29 @@
 #include "PluginEditor.h"
 
+#if JUCE_MAC
+extern void macEnterTrueFullscreen(juce::Component&);
+extern void macExitTrueFullscreen(juce::Component&);
+#endif
+
+namespace
+{
+    // Borderless top-level window used to host the viewport in fullscreen mode.
+    class FullscreenViewportWindow : public juce::DocumentWindow
+    {
+    public:
+        FullscreenViewportWindow()
+            : DocumentWindow("DoomViz", juce::Colours::black, 0)
+        {
+            setUsingNativeTitleBar(false);
+            setTitleBarHeight(0);
+            setDropShadowEnabled(false);
+        }
+
+        std::function<void()> onClose;
+        void closeButtonPressed() override { if (onClose) onClose(); }
+    };
+}
+
 DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
     : AudioProcessorEditor(&p),
       processorRef(p),
@@ -7,11 +31,33 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
 {
     addAndMakeVisible(viewport);
 
+    // Double-clicking the viewport while in fullscreen exits — provides an
+    // escape hatch in case the floating control window is hidden behind it.
+    // Defer via callAsync so the mouse event finishes unwinding before we
+    // tear down the window that owns it (otherwise the OS event loop can
+    // wedge with a phantom window stuck at CGShieldingWindowLevel).
+    viewport.onDoubleClick = [this]()
+    {
+        if (! fullscreenWindow) return;
+        juce::MessageManager::callAsync([this]()
+        {
+            if (fullscreenWindow)
+                exitFullscreen();
+        });
+    };
+
     // Create the floating control window
     controlWindow = std::make_unique<ControlWindow>();
     controlWindow->getPanel().onSceneChange = [&p](int scene)
     {
         p.sceneOverride.store(scene, std::memory_order_relaxed);
+    };
+    controlWindow->getPanel().onToggleFullscreen = [this](bool on)
+    {
+        if (on)
+            enterFullscreen();
+        else
+            exitFullscreen();
     };
 
     setSize(960, 600);
@@ -21,10 +67,64 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
 
 DoomVizEditor::~DoomVizEditor()
 {
+    if (fullscreenWindow)
+        exitFullscreen();
     controlWindow.reset();
 }
 
 void DoomVizEditor::resized()
 {
+    if (! fullscreenWindow)
+        viewport.setBounds(getLocalBounds());
+}
+
+void DoomVizEditor::enterFullscreen()
+{
+    if (fullscreenWindow)
+        return;
+
+    auto window = std::make_unique<FullscreenViewportWindow>();
+    window->onClose = [this]() { exitFullscreen(); };
+
+    // Reparent the viewport into the new top-level window.
+    removeChildComponent(&viewport);
+    window->setContentNonOwned(&viewport, false);
+    window->setVisible(true);
+
+    fullscreenWindow = std::move(window);
+
+#if JUCE_MAC
+    // Native Cocoa: elevate the window above the menu bar and hide menu/dock.
+    macEnterTrueFullscreen(*fullscreenWindow);
+#else
+    juce::Desktop::getInstance().setKioskModeComponent(fullscreenWindow.get(), false);
+#endif
+}
+
+void DoomVizEditor::exitFullscreen()
+{
+    if (! fullscreenWindow)
+        return;
+
+#if JUCE_MAC
+    macExitTrueFullscreen(*fullscreenWindow);
+#else
+    juce::Desktop::getInstance().setKioskModeComponent(nullptr);
+#endif
+
+    fullscreenWindow->clearContentComponent();
+    fullscreenWindow.reset();
+
+    addAndMakeVisible(viewport);
     viewport.setBounds(getLocalBounds());
+
+    // Restore key-window status to the editor's host window so Bitwig
+    // (or whichever DAW) regains keyboard / mouse focus.
+    if (auto* peer = getPeer())
+        peer->grabFocus();
+
+    // Sync the control panel button label/state back to "Fullscreen" — the
+    // user may have exited via double-click instead of the button.
+    if (controlWindow)
+        controlWindow->getPanel().setFullscreenState(false);
 }

@@ -28,7 +28,18 @@ ControlPanel::ControlPanel()
     sceneA.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff4444));
     sceneA.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff000000));
 
-    setSize(340, 120);
+    fullscreenBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff333333));
+    fullscreenBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffcccccc));
+    fullscreenBtn.onClick = [this]()
+    {
+        isFullscreen = !isFullscreen;
+        fullscreenBtn.setButtonText(isFullscreen ? "Exit Fullscreen" : "Fullscreen");
+        if (onToggleFullscreen)
+            onToggleFullscreen(isFullscreen);
+    };
+    addAndMakeVisible(fullscreenBtn);
+
+    setSize(340, 170);
 }
 
 void ControlPanel::resized()
@@ -48,6 +59,9 @@ void ControlPanel::resized()
     sceneB.setBounds(btnRow.removeFromLeft(btnW));
     btnRow.removeFromLeft(5);
     sceneC.setBounds(btnRow);
+
+    area.removeFromTop(10);
+    fullscreenBtn.setBounds(area.removeFromTop(36));
 }
 
 void ControlPanel::selectScene(int index)
@@ -83,6 +97,14 @@ void ControlPanel::selectScene(int index)
 
     if (onSceneChange)
         onSceneChange(index);
+}
+
+void ControlPanel::setFullscreenState(bool fullscreen)
+{
+    if (isFullscreen == fullscreen)
+        return;
+    isFullscreen = fullscreen;
+    fullscreenBtn.setButtonText(isFullscreen ? "Exit Fullscreen" : "Fullscreen");
 }
 
 // --- ControlWindow ---

@@ -21,3 +21,7 @@ resources/DOOM/
 
 # OS
 .DS_Store
+
+# Tooling state
+.claude/
+.task/

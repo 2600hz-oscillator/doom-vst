@@ -15,12 +15,23 @@ public:
     // Callback when scene is selected (0, 1, 2)
     std::function<void(int)> onSceneChange;
 
+    // Callback when the fullscreen toggle is clicked.
+    std::function<void(bool)> onToggleFullscreen;
+
+    // Externally update the fullscreen button's label/state without firing
+    // the onToggleFullscreen callback. Used when the user exits fullscreen
+    // via a different path (e.g. double-clicking the viewport).
+    void setFullscreenState(bool fullscreen);
+
 private:
     juce::TextButton sceneA { "Kill Room" };
     juce::TextButton sceneB { "Analyzer" };
     juce::TextButton sceneC { "Doom Spectrum" };
+    juce::TextButton fullscreenBtn { "Fullscreen" };
     juce::Label sceneLabel { {}, "Scene:" };
     juce::Label activeLabel { {}, "Kill Room" };
+
+    bool isFullscreen = false;
 
     void selectScene(int index);
 

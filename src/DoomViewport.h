@@ -8,6 +8,7 @@
 #include "routing/SignalRouter.h"
 #include "routing/RouteConfig.h"
 #include "scenes/SceneManager.h"
+#include <functional>
 #include <memory>
 
 class DoomViewport : public juce::Component,
@@ -27,6 +28,12 @@ public:
 
     // Access analyzer results
     const AudioAnalyzer& getAnalyzer() const { return analyzer; }
+
+    // Called on a double-click anywhere in the viewport. Used by the editor to
+    // exit fullscreen mode.
+    std::function<void()> onDoubleClick;
+
+    void mouseDoubleClick(const juce::MouseEvent&) override;
 
 private:
     juce::OpenGLContext glContext;

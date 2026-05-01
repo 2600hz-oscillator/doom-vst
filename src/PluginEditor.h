@@ -17,6 +17,10 @@ private:
     DoomVizProcessor& processorRef;
     DoomViewport viewport;
     std::unique_ptr<ControlWindow> controlWindow;
+    std::unique_ptr<juce::DocumentWindow> fullscreenWindow;
+
+    void enterFullscreen();
+    void exitFullscreen();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomVizEditor)
 };
