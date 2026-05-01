@@ -21,7 +21,27 @@ Walks E1M1 with the shotgun. Audio onsets spawn monsters in front of the player.
 Walks E1M1 with the BFG9000. Eight audio bands are injected as colored bars onto the `STARTAN3` wall texture in real time. Player movement speed tracks the sub-bass band &mdash; bass moves you, silence stops you.
 
 ### Doom Spectrum (PC 2)
-2D mode. Pulsing audio-driven warp pattern (layered sin/cos + radial fields) behind eight Doom sprites scaled by frequency band. Each band parameter (zoom, swirl rate, color shift, intensity) is locked to a different band envelope, so the visual moves *with* the music. Sprites: Doom marine (bands 0-1, bass), imp (bands 2-5, mids), zombieman (band 6), shotgun guy (band 7). Onsets jolt the palette.
+2D mode. An audio-driven background renders behind eight Doom sprites whose size scales with per-band audio levels. Everything &mdash; band frequency edges, per-band sprite, per-band gain, and the background pattern itself &mdash; is configurable from the **Patch Settings** window (button on the floating control panel). Edits stage in the UI and only apply when you click **Apply** (lower-right). State is saved with the DAW project.
+
+#### Per-band controls
+
+Each of the 8 bands is a row in the patch window with four controls:
+
+- **Low Hz** / **High Hz** &mdash; the band's frequency range. Pulled directly from the FFT magnitude spectrum; bands can overlap, leave gaps, or be re-ordered.
+- **Gain** &mdash; 0..1 slider. Sprite scale = `bandAmplitude × (gain × 4.0)`. Slider all the way left hides the sprite for that band entirely.
+- **Sprite** &mdash; dropdown of every sprite present in the shareware WAD, grouped into Characters / Guns / Powerups / Armor. Defaults match the prior fixed assignments (Marine, Marine, Imp×4, Zombieman, Shotgun Guy).
+
+#### Background vibes
+
+The **Background Vibe** dropdown switches the backdrop pattern:
+
+- **ACIDWARP.EXE** &mdash; the original layered sin/cos warp; per-band envelopes drive zoom, swirl rate, color shift, intensity. Onsets jolt the palette.
+- **VAPORWAVE** &mdash; scrolling vertical bars in purple / teal / pink with a vertical gradient. Bar width tracks band 3; color phase tracks band 4.
+- **PUNKROCK** &mdash; grid of brown / black / gray squares. Cell size tracks band 3; cells jitter with overall RMS.
+- **DOOMTEX** &mdash; tiles a real E1M1 wall texture (`STARTAN3`, `BROWN1`, `COMPSTA1`, `COMPUTE1`, `TEKWALL1`, `BROWNHUG`, `BIGDOOR2`, `METAL`); advances to the next texture each time band 3 crosses 50%.
+- **WINAMP** &mdash; eight stacked-LED EQ bars, green &rarr; yellow &rarr; red, with white peak-hold markers that decay slowly.
+- **STARFIELD** &mdash; Win95-screensaver-style zooming starfield; speed scales with overall RMS, near stars sparkle.
+- **CRTGLITCH** &mdash; CRT scanlines and horizontal tear bands with chromatic aberration; onsets trigger flashes.
 
 ## How it works
 

@@ -6,7 +6,7 @@ namespace patch
 PlaceholderPatchPanel::PlaceholderPatchPanel(const juce::String& sceneName)
     : name(sceneName)
 {
-    setSize(640, 340);
+    setSize(640, 376);
 }
 
 void PlaceholderPatchPanel::paint(juce::Graphics& g)

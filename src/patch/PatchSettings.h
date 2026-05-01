@@ -19,9 +19,23 @@ struct SpectrumBand
 constexpr int  kSpectrumNumBands = 8;
 constexpr float kSpectrumMaxGain = 4.0f;
 
+enum class BackgroundVibe : int
+{
+    AcidwarpExe = 0,
+    Vaporwave   = 1,
+    Punkrock    = 2,
+    Doomtex     = 3,
+    Winamp      = 4,
+    Starfield   = 5,
+    Crtglitch   = 6,
+};
+
+constexpr int kNumBackgroundVibes = 7;
+
 struct SpectrumSettings
 {
     std::array<SpectrumBand, kSpectrumNumBands> bands;
+    BackgroundVibe vibe { BackgroundVibe::AcidwarpExe };
 
     static SpectrumSettings makeDefault()
     {

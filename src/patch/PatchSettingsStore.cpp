@@ -23,6 +23,7 @@ juce::String PatchSettingsStore::toXmlString() const
 
     juce::XmlElement root("DoomVizPatches");
     auto* spec = root.createNewChildElement("Spectrum");
+    spec->setAttribute("vibe", static_cast<int>(snap.vibe));
     for (int i = 0; i < kSpectrumNumBands; ++i)
     {
         auto* b = spec->createNewChildElement("Band");
@@ -44,6 +45,10 @@ void PatchSettingsStore::fromXmlString(const juce::String& xmlString)
     SpectrumSettings s = SpectrumSettings::makeDefault();
     if (auto* spec = xml->getChildByName("Spectrum"))
     {
+        int v = spec->getIntAttribute("vibe", static_cast<int>(s.vibe));
+        if (v >= 0 && v < kNumBackgroundVibes)
+            s.vibe = static_cast<BackgroundVibe>(v);
+
         for (auto* b : spec->getChildIterator())
         {
             if (! b->hasTagName("Band")) continue;

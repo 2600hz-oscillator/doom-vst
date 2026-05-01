@@ -135,13 +135,53 @@
                 <span class="tag">PC 2</span>
                 <img src="images/doom_spectrum_scene.png" alt="Doom Spectrum">
                 <h3>Doom Spectrum</h3>
-                <p>2D mode. Pulsing audio-driven warp pattern behind eight Doom sprites scaled by
-                frequency: marine (bass), imp (mids), zombieman + shotgun guy (highs). Each warp
-                parameter is locked to a different band envelope, so the pattern moves with the music.</p>
+                <p>2D mode. Audio-driven background behind eight Doom sprites whose size scales with
+                per-band audio. Band frequencies, per-band sprite, per-band gain, and the background
+                pattern itself are all editable from the Patch Settings window.</p>
             </div>
         </div>
         <p>Switch scenes via the floating control window or MIDI Program Change. Each switch reloads
         the map for full state isolation &mdash; no state bleeds between scenes.</p>
+
+        <h2>Doom Spectrum: patch settings</h2>
+        <p>Click <strong>Patch Settings</strong> on the floating control panel to open the editor for the
+        active scene. Edits stage in the UI &mdash; only the <strong>Apply</strong> button (lower-right)
+        commits them to the renderer. Switching scenes silently reverts pending edits. State persists
+        with the DAW project.</p>
+
+        <h3>Per-band controls (8 rows)</h3>
+        <ul>
+            <li><strong>Low Hz</strong> / <strong>High Hz</strong> &mdash; the band's frequency range.
+            Pulled directly from the FFT magnitude spectrum, so bands may overlap, leave gaps, or be
+            reordered.</li>
+            <li><strong>Gain</strong> &mdash; 0..1 slider. Sprite scale =
+            <code>bandAmplitude &times; (gain &times; 4.0)</code>. Slider all the way left hides
+            the sprite for that band.</li>
+            <li><strong>Sprite</strong> &mdash; dropdown of every sprite present in the shareware WAD,
+            grouped into <em>Characters</em> / <em>Guns</em> / <em>Powerups</em> / <em>Armor</em>.
+            Defaults: Marine (bands 1&ndash;2), Imp (3&ndash;6), Zombieman (7), Shotgun Guy (8).</li>
+        </ul>
+
+        <h3>Background vibes</h3>
+        <p>The <strong>Background Vibe</strong> dropdown switches the backdrop pattern:</p>
+        <ul>
+            <li><strong>ACIDWARP.EXE</strong> &mdash; layered sin/cos warp; band envelopes drive zoom,
+            swirl rate, color shift, and intensity. Onsets jolt the palette.</li>
+            <li><strong>VAPORWAVE</strong> &mdash; scrolling vertical bars in purple / teal / pink with
+            a vertical gradient. Bar width tracks band 3; color phase tracks band 4.</li>
+            <li><strong>PUNKROCK</strong> &mdash; grid of brown / black / gray squares. Cell size tracks
+            band 3; cells jitter with overall RMS.</li>
+            <li><strong>DOOMTEX</strong> &mdash; tiles a real E1M1 wall texture (<code>STARTAN3</code>,
+            <code>BROWN1</code>, <code>COMPSTA1</code>, <code>COMPUTE1</code>, <code>TEKWALL1</code>,
+            <code>BROWNHUG</code>, <code>BIGDOOR2</code>, <code>METAL</code>); advances to the next
+            texture each time band 3 crosses 50%.</li>
+            <li><strong>WINAMP</strong> &mdash; eight stacked-LED EQ bars (green &rarr; yellow &rarr; red)
+            with white peak-hold markers that decay slowly.</li>
+            <li><strong>STARFIELD</strong> &mdash; Win95-screensaver-style zooming starfield; speed scales
+            with overall RMS.</li>
+            <li><strong>CRTGLITCH</strong> &mdash; CRT scanlines and horizontal tear bands with chromatic
+            aberration; onsets trigger flashes.</li>
+        </ul>
 
         <h2>Signal flow</h2>
         <div class="arch-diagram">Audio In &rarr; FFT / RMS / Onset &rarr; Signal Router &rarr; Scene &rarr; Doom renderer &rarr; OpenGL

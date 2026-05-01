@@ -131,6 +131,13 @@ void doom_set_flat_data(const char* flat_name, const uint8_t* pixels);
 void doom_set_wall_texture_data(const char* tex_name, const uint8_t* pixels,
                                  int* out_width, int* out_height);
 
+// Read a wall texture's pixel data (column-major indexed bytes).
+// Copies up to max_pixels bytes into out_pixels (which may be NULL for a
+// query). Sets out_width / out_height (may be NULL).
+// Returns total bytes (width * height) on success, 0 on failure.
+int doom_get_wall_texture_data(const char* tex_name, uint8_t* out_pixels,
+                                int max_pixels, int* out_width, int* out_height);
+
 // Give the player a specific weapon. weapon_id is a weapontype_t value.
 void doom_give_weapon(int weapon_id);
 

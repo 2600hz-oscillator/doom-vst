@@ -10,6 +10,7 @@ namespace
     constexpr int kRowHeight = 28;
     constexpr int kHeaderHeight = 22;
     constexpr int kFooterHeight = 36;
+    constexpr int kVibeRowHeight = 28;
     constexpr int kPad = 10;
 
     constexpr int kColLabelW  = 36;
@@ -77,6 +78,25 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
     styleHeader(headerGain,   "Gain");
     styleHeader(headerSprite, "Sprite");
 
+    vibeLabel.setText("Background Vibe:", juce::dontSendNotification);
+    vibeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcccccc));
+    vibeLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    vibeLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(vibeLabel);
+
+    vibeCombo.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff222222));
+    vibeCombo.setColour(juce::ComboBox::textColourId, juce::Colour(0xffeeeeee));
+    vibeCombo.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff444444));
+    vibeCombo.setColour(juce::ComboBox::arrowColourId, juce::Colour(0xffcccccc));
+    static const char* kVibeNames[kNumBackgroundVibes] = {
+        "ACIDWARP.EXE", "VAPORWAVE", "PUNKROCK", "DOOMTEX",
+        "WINAMP", "STARFIELD", "CRTGLITCH"
+    };
+    for (int i = 0; i < kNumBackgroundVibes; ++i)
+        vibeCombo.addItem(kVibeNames[i], i + 1);
+    vibeCombo.onChange = [this]() { markDirty(); };
+    addAndMakeVisible(vibeCombo);
+
     for (int i = 0; i < kSpectrumNumBands; ++i)
     {
         auto& r = rows[static_cast<size_t>(i)];
@@ -132,8 +152,8 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
     addAndMakeVisible(revertBtn);
 
     // Drive the size of the hosting window via setContentNonOwned. Sized to
-    // fit 8 band rows + header + footer + padding (with the new Sprite column).
-    setSize(640, 340);
+    // fit vibe row + header + 8 band rows + footer + padding.
+    setSize(640, 376);
 
     loadFromStore();
 }
@@ -149,6 +169,13 @@ void SpectrumPatchPanel::resized()
 
     auto footer = area.removeFromBottom(kFooterHeight);
     area.removeFromBottom(8);
+
+    // Background Vibe row at the top of the panel.
+    auto vibeRow = area.removeFromTop(kVibeRowHeight);
+    vibeLabel.setBounds(vibeRow.removeFromLeft(140));
+    vibeRow.removeFromLeft(8);
+    vibeCombo.setBounds(vibeRow.removeFromLeft(220));
+    area.removeFromTop(8);
 
     auto headerRow = area.removeFromTop(kHeaderHeight);
     headerBand.setBounds(headerRow.removeFromLeft(kColLabelW));
@@ -196,6 +223,11 @@ void SpectrumPatchPanel::markDirty()
 SpectrumSettings SpectrumPatchPanel::buildSettingsFromUI() const
 {
     SpectrumSettings out = store.getSpectrum();  // start from applied as fallback
+
+    int vibeId = vibeCombo.getSelectedId();
+    if (vibeId >= 1 && vibeId <= kNumBackgroundVibes)
+        out.vibe = static_cast<BackgroundVibe>(vibeId - 1);
+
     for (int i = 0; i < kSpectrumNumBands; ++i)
     {
         const auto& r = rows[static_cast<size_t>(i)];
@@ -218,6 +250,8 @@ SpectrumSettings SpectrumPatchPanel::buildSettingsFromUI() const
 
 void SpectrumPatchPanel::writeSettingsToUI(const SpectrumSettings& s)
 {
+    vibeCombo.setSelectedId(static_cast<int>(s.vibe) + 1, juce::dontSendNotification);
+
     for (int i = 0; i < kSpectrumNumBands; ++i)
     {
         auto& r = rows[static_cast<size_t>(i)];

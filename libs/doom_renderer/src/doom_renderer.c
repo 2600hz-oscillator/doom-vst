@@ -602,6 +602,46 @@ void doom_set_wall_texture_data(const char* tex_name, const uint8_t* pixels,
     }
 }
 
+extern byte* R_GetColumn(int tex, int col);
+
+int doom_get_wall_texture_data(const char* tex_name, uint8_t* out_pixels,
+                                int max_pixels, int* out_width, int* out_height)
+{
+    if (!initialized || tex_name == NULL)
+        return 0;
+
+    int texnum = R_CheckTextureNumForName((char*)tex_name);
+    if (texnum < 0 || texnum >= numtextures)
+        return 0;
+
+    dviz_texture_t* tex = textures[texnum];
+    int w = tex->width;
+    int h = tex->height;
+    int total = w * h;
+
+    if (out_width)  *out_width  = w;
+    if (out_height) *out_height = h;
+
+    if (out_pixels == NULL || max_pixels <= 0)
+        return total;
+
+    int copyBytes = (max_pixels < total) ? max_pixels : total;
+    int colsToCopy = copyBytes / h;
+    int rem = copyBytes % h;
+
+    for (int col = 0; col < colsToCopy; ++col)
+    {
+        byte* src = R_GetColumn(texnum, col);
+        memcpy(out_pixels + col * h, src, h);
+    }
+    if (rem > 0 && colsToCopy < w)
+    {
+        byte* src = R_GetColumn(texnum, colsToCopy);
+        memcpy(out_pixels + colsToCopy * h, src, rem);
+    }
+    return total;
+}
+
 void doom_give_weapon(int weapon_id)
 {
     if (!map_loaded)

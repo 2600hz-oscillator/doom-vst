@@ -43,6 +43,10 @@ private:
     std::array<BandRow, kSpectrumNumBands> rows;
 
     juce::Label headerBand, headerLow, headerHigh, headerGain, headerSprite;
+
+    juce::Label    vibeLabel { {}, "Background Vibe:" };
+    juce::ComboBox vibeCombo;
+
     juce::TextButton applyBtn { "Apply" };
     juce::TextButton revertBtn { "Revert" };
 
