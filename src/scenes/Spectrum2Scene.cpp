@@ -1,6 +1,7 @@
 #include "Spectrum2Scene.h"
 #include "doom/DoomEngine.h"
 #include "audio/AudioAnalyzer.h"
+#include "patch/PatchSettingsStore.h"
 #include "doom_renderer.h"
 #include <cmath>
 #include <algorithm>
@@ -8,11 +9,14 @@
 
 static constexpr float TWO_PI = 6.28318530718f;
 
-Spectrum2Scene::Spectrum2Scene(const AudioAnalyzer& az)
+Spectrum2Scene::Spectrum2Scene(const AudioAnalyzer& az,
+                                const patch::PatchSettingsStore& store)
     : analyzer(az),
+      patchStore(store),
       rgbaBuffer(static_cast<size_t>(kWidth * kHeight * 4), 0)
 {
     initSinTable();
+    bandGains01.fill(0.625f);
 }
 
 void Spectrum2Scene::initSinTable()
@@ -60,23 +64,58 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
 {
     (void)engine;
 
-    // Time mult driven by high frequencies (bands 6,7 — highs/air)
-    const float* envelope = analyzer.getBandEnvelope();
-    int analyzerBands = analyzer.getNumBands();
+    // Pull current patch settings (snapshot copy under SpinLock).
+    patch::SpectrumSettings snap = patchStore.getSpectrum();
 
-    // Map analyzer bands to our 8 display bands
+    // Compute per-band amplitudes from the raw FFT magnitude spectrum using
+    // the user-configured Hz ranges. Replaces the prior fixed 8-from-16
+    // mapping so the UI's lowHz/highHz textboxes drive band membership.
+    const float* spectrum = analyzer.getMagnitudeSpectrum();
+    const int specSize = analyzer.getSpectrumSize();
+    const double sampleRate = analyzer.getSampleRate();
+    const float binWidth = static_cast<float>(sampleRate) / static_cast<float>(AudioAnalyzer::kFFTSize);
+
+    std::array<float, kNumDisplayBands> rawBand {};
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
-        int srcIdx = i * analyzerBands / kNumDisplayBands;
-        int srcEnd = (i + 1) * analyzerBands / kNumDisplayBands;
-        float sum = 0.0f;
+        const auto& cfg = snap.bands[static_cast<size_t>(i)];
+        bandGains01[static_cast<size_t>(i)] = cfg.gain01;
+
+        int lowBin = std::max(1, static_cast<int>(cfg.lowHz / binWidth));
+        int highBin = std::min(specSize - 1, static_cast<int>(cfg.highHz / binWidth));
+        if (highBin < lowBin) std::swap(lowBin, highBin);
+
+        float sumSq = 0.0f;
         int count = 0;
-        for (int j = srcIdx; j < srcEnd && j < analyzerBands; ++j)
+        for (int bin = lowBin; bin <= highBin; ++bin)
         {
-            sum += envelope[j];
+            float mag = spectrum[static_cast<size_t>(bin)];
+            sumSq += mag * mag;
             count++;
         }
-        bandAmplitudes[static_cast<size_t>(i)] = count > 0 ? sum / static_cast<float>(count) : 0.0f;
+        rawBand[static_cast<size_t>(i)] = count > 0 ? std::sqrt(sumSq / static_cast<float>(count)) : 0.0f;
+    }
+
+    // Peak-normalize across our 8 bands (mirrors AudioAnalyzer's approach so
+    // the loudest band lands at ~1.0 and relative balance is preserved).
+    float maxBand = *std::max_element(rawBand.begin(), rawBand.end());
+    if (maxBand > 0.0001f)
+    {
+        for (auto& b : rawBand)
+            b = std::min(1.0f, b / maxBand);
+    }
+
+    // Per-frame envelope follower (one-pole, attack/release time constants).
+    constexpr float kAttack = 0.01f;
+    constexpr float kRelease = 0.15f;
+    float dt = std::max(0.001f, deltaTime);
+    float attackCoeff = 1.0f - std::exp(-dt / kAttack);
+    float releaseCoeff = 1.0f - std::exp(-dt / kRelease);
+    for (int i = 0; i < kNumDisplayBands; ++i)
+    {
+        float target = rawBand[static_cast<size_t>(i)];
+        float& env = bandAmplitudes[static_cast<size_t>(i)];
+        env += (target > env ? attackCoeff : releaseCoeff) * (target - env);
     }
 
     overallRMS = analyzer.getRMSLevel();
@@ -247,6 +286,9 @@ const uint8_t* Spectrum2Scene::render(DoomEngine& engine)
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
         float amp = bandAmplitudes[static_cast<size_t>(i)];
+        float gain01 = bandGains01[static_cast<size_t>(i)];
+        // Slider all the way left → no contribution → sprite hidden.
+        if (gain01 < 0.001f) continue;
         if (amp < 0.01f) continue;
 
         int centerX = bandWidth / 2 + i * bandWidth;
@@ -255,8 +297,9 @@ const uint8_t* Spectrum2Scene::render(DoomEngine& engine)
         doom_sprite_t spr = doom_get_sprite(spriteId, 0, 0);
         if (spr.patch_data != nullptr)
         {
-            float scale = 0.5f + amp * 2.5f;
-            drawPatchSprite(spr.patch_data, centerX, baseY, scale);
+            float scale = amp * (gain01 * patch::kSpectrumMaxGain);
+            if (scale >= 0.01f)
+                drawPatchSprite(spr.patch_data, centerX, baseY, scale);
         }
     }
 

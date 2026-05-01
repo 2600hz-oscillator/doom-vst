@@ -21,6 +21,7 @@ public:
 
     // Set the sample rate for frequency calculations.
     void setSampleRate(double sr) { sampleRate = sr; }
+    double getSampleRate() const { return sampleRate; }
 
     // --- Results (read from render thread after pushSamples) ---
 

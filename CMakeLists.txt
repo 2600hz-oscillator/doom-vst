@@ -43,6 +43,10 @@ target_sources(DoomViz PRIVATE
     src/scenes/KillRoomScene.cpp
     src/scenes/AnalyzerRoomScene.cpp
     src/scenes/Spectrum2Scene.cpp
+    src/patch/PatchSettingsStore.cpp
+    src/patch/PatchWindow.cpp
+    src/patch/SpectrumPatchPanel.cpp
+    src/patch/PlaceholderPatchPanel.cpp
     $<$<PLATFORM_ID:Darwin>:src/MacFullscreen.mm>
 )
 

@@ -1,11 +1,13 @@
 #pragma once
 
 #include "Scene.h"
+#include "patch/PatchSettings.h"
 #include <vector>
 #include <cstdint>
 #include <array>
 
 class AudioAnalyzer;
+namespace patch { class PatchSettingsStore; }
 
 // Scene D: Spectrum visualizer with acidwarp-style animated background.
 // Background pattern parameters are driven by individual frequency bands.
@@ -15,9 +17,10 @@ class Spectrum2Scene : public Scene
 public:
     static constexpr int kWidth = 320;
     static constexpr int kHeight = 200;
-    static constexpr int kNumDisplayBands = 8;
+    static constexpr int kNumDisplayBands = patch::kSpectrumNumBands;
 
-    Spectrum2Scene(const AudioAnalyzer& analyzer);
+    Spectrum2Scene(const AudioAnalyzer& analyzer,
+                   const patch::PatchSettingsStore& patchStore);
 
     void init(DoomEngine& engine) override;
     void update(DoomEngine& engine, const ParameterMap& params, float deltaTime) override;
@@ -27,9 +30,13 @@ public:
 
 private:
     const AudioAnalyzer& analyzer;
+    const patch::PatchSettingsStore& patchStore;
     std::vector<uint8_t> rgbaBuffer;
 
+    // Per-band amplitudes (post-envelope, post-normalization, in [0,1])
     std::array<float, kNumDisplayBands> bandAmplitudes {};
+    // Per-band slider gain pulled from settings each Apply (0..1).
+    std::array<float, kNumDisplayBands> bandGains01 {};
     float overallRMS = 0.0f;
     bool onsetTrigger = false;
 

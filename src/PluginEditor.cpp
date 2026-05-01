@@ -27,7 +27,8 @@ namespace
 DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
     : AudioProcessorEditor(&p),
       processorRef(p),
-      viewport(p.getSignalBus(), p.getCurrentSampleRate(), &p.sceneOverride)
+      viewport(p.getSignalBus(), p.getCurrentSampleRate(),
+               p.getPatchSettings(), &p.sceneOverride)
 {
     addAndMakeVisible(viewport);
 
@@ -48,9 +49,16 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
 
     // Create the floating control window
     controlWindow = std::make_unique<ControlWindow>();
-    controlWindow->getPanel().onSceneChange = [&p](int scene)
+
+    // Create the patch settings window (hidden by default; opened via the
+    // Patch Settings button on the control panel).
+    patchWindow = std::make_unique<patch::PatchWindow>(p.getPatchSettings());
+
+    controlWindow->getPanel().onSceneChange = [this, &p](int scene)
     {
         p.sceneOverride.store(scene, std::memory_order_relaxed);
+        if (patchWindow)
+            patchWindow->setActiveScene(scene);
     };
     controlWindow->getPanel().onToggleFullscreen = [this](bool on)
     {
@@ -58,6 +66,10 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
             enterFullscreen();
         else
             exitFullscreen();
+    };
+    controlWindow->getPanel().onTogglePatchSettings = [this]()
+    {
+        togglePatchWindow();
     };
 
     setSize(960, 600);
@@ -69,7 +81,17 @@ DoomVizEditor::~DoomVizEditor()
 {
     if (fullscreenWindow)
         exitFullscreen();
+    patchWindow.reset();
     controlWindow.reset();
+}
+
+void DoomVizEditor::togglePatchWindow()
+{
+    if (! patchWindow) return;
+    bool nowVisible = ! patchWindow->isVisible();
+    patchWindow->setVisible(nowVisible);
+    if (nowVisible)
+        patchWindow->toFront(true);
 }
 
 void DoomVizEditor::resized()

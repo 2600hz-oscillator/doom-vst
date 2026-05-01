@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "audio/SignalBus.h"
 #include "audio/MidiHandler.h"
+#include "patch/PatchSettingsStore.h"
 #include <memory>
 
 class DoomVizProcessor : public juce::AudioProcessor
@@ -41,9 +42,15 @@ public:
     // Scene override from control window (-1 = no override, use MIDI PC)
     std::atomic<int> sceneOverride { -1 };
 
+    // Per-scene editable patch settings (GUI-thread writes via the patch
+    // window's Apply button; render thread reads via snapshot copy).
+    patch::PatchSettingsStore& getPatchSettings() { return patchSettings; }
+    const patch::PatchSettingsStore& getPatchSettings() const { return patchSettings; }
+
 private:
     SignalBus signalBus;
     MidiHandler midiHandler;
+    patch::PatchSettingsStore patchSettings;
     std::vector<float> monoBuffer;
     double currentSampleRate = 44100.0;
 

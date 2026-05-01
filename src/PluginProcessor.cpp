@@ -72,12 +72,17 @@ juce::AudioProcessorEditor* DoomVizProcessor::createEditor()
     return new DoomVizEditor(*this);
 }
 
-void DoomVizProcessor::getStateInformation(juce::MemoryBlock& /*destData*/)
+void DoomVizProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
+    juce::String xml = patchSettings.toXmlString();
+    destData.replaceAll(xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 }
 
-void DoomVizProcessor::setStateInformation(const void* /*data*/, int /*sizeInBytes*/)
+void DoomVizProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
+    if (data == nullptr || sizeInBytes <= 0) return;
+    juce::String xml = juce::String::fromUTF8(static_cast<const char*>(data), sizeInBytes);
+    patchSettings.fromXmlString(xml);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

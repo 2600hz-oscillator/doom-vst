@@ -39,7 +39,15 @@ ControlPanel::ControlPanel()
     };
     addAndMakeVisible(fullscreenBtn);
 
-    setSize(340, 170);
+    patchBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff333333));
+    patchBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffcccccc));
+    patchBtn.onClick = [this]()
+    {
+        if (onTogglePatchSettings) onTogglePatchSettings();
+    };
+    addAndMakeVisible(patchBtn);
+
+    setSize(340, 220);
 }
 
 void ControlPanel::resized()
@@ -62,6 +70,8 @@ void ControlPanel::resized()
 
     area.removeFromTop(10);
     fullscreenBtn.setBounds(area.removeFromTop(36));
+    area.removeFromTop(10);
+    patchBtn.setBounds(area.removeFromTop(36));
 }
 
 void ControlPanel::selectScene(int index)
