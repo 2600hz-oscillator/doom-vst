@@ -193,6 +193,7 @@ target_sources(doomviz_integration_tests PRIVATE
     test/integration/test_processor_pass_through.cpp
     test/integration/test_processor_midi.cpp
     test/integration/test_processor_state.cpp
+    test/integration/test_state_persistence.cpp
     test/integration/processor_test_stub.cpp
     src/PluginProcessor.cpp
     src/audio/SignalBus.cpp
