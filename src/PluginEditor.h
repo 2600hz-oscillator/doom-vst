@@ -32,6 +32,7 @@ private:
     void timerCallback() override;
     juce::String describeTargetDisplay() const;
     juce::String lastDisplayName;
+    int lastObservedScene = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomVizEditor)
 };

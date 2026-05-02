@@ -129,6 +129,35 @@ void ControlPanel::setDisplayName(const juce::String& name)
     displayLabel.setText("Display: " + name, juce::dontSendNotification);
 }
 
+void ControlPanel::setActiveScene(int sceneIndex)
+{
+    // Same UI update as selectScene, minus firing onSceneChange — used to
+    // reflect non-GUI scene switches (e.g. MIDI Program Change) back into
+    // the button highlighting and active-label.
+    auto resetBtn = [](juce::TextButton& btn)
+    {
+        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff333333));
+        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffcccccc));
+    };
+    auto highlightBtn = [](juce::TextButton& btn)
+    {
+        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff4444));
+        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff000000));
+    };
+    resetBtn(sceneA); resetBtn(sceneB); resetBtn(sceneC);
+
+    const char* names[] = { "Kill Room", "Analyzer", "Doom Spectrum" };
+    switch (sceneIndex)
+    {
+        case 0: highlightBtn(sceneA); break;
+        case 1: highlightBtn(sceneB); break;
+        case 2: highlightBtn(sceneC); break;
+        default: break;
+    }
+    if (sceneIndex >= 0 && sceneIndex < 3)
+        activeLabel.setText(names[sceneIndex], juce::dontSendNotification);
+}
+
 // --- ControlWindow ---
 
 ControlWindow::ControlWindow()
