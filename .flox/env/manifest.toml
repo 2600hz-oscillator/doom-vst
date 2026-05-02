@@ -34,6 +34,7 @@ curl.pkg-path = "curl"
 curl.systems = ["aarch64-linux", "x86_64-linux"]
 webkitgtk.pkg-path = "webkitgtk_4_1"
 webkitgtk.systems = ["aarch64-linux", "x86_64-linux"]
+gh.pkg-path = "gh"
 
 
 ## Environment Variables ---------------------------------------------
