@@ -7,8 +7,9 @@
 namespace patch
 {
 
-// Spectrum-scene-specific config. Phase 2: just the background-vibe combo.
-// Phase 3 will add the DOOMTEX texture picker + auto-advance controls.
+// Spectrum-scene-specific config: background vibe + DOOMTEX picker /
+// auto-advance controls. Lives inside ControlPanel; not a window of its
+// own.
 class SpectrumSection : public juce::Component
 {
 public:
@@ -23,8 +24,18 @@ public:
     std::function<void()> onEdit;
 
 private:
-    juce::Label    vibeLabel { {}, "BACKGROUND" };
+    juce::Label    vibeLabel  { {}, "BACKGROUND" };
     juce::ComboBox vibeCombo;
+
+    juce::Label    texLabel       { {}, "DOOMTEX" };
+    juce::ComboBox texCombo;
+    juce::ToggleButton autoAdvanceBtn { "AUTO" };
+
+    juce::Label    autoBandLabel  { {}, "BAND" };
+    juce::ComboBox autoBandCombo;
+
+    juce::Label    autoThreshLabel { {}, "THRESH" };
+    juce::Slider   autoThreshSlider;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SpectrumSection)
 };
