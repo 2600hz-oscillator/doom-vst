@@ -26,8 +26,9 @@ namespace
     // 8 rows × 26 px row height + 20 px header + 2 px gap
     constexpr int kBandRowsH    = 20 + 2 + 8 * 26;
 
-    // Spectrum section (Phase 2: just the vibe combo). Phase 3 will grow.
-    constexpr int kSpectrumSectionH = 30;
+    // Spectrum section: vibe row + DOOMTEX row + auto-advance row. Each row
+    // is 26 px high with a 4 px gap between them.
+    constexpr int kSpectrumSectionH = 26 * 3 + 4 * 2;
     constexpr int kPlaceholderH     = 30;
 
     constexpr int kWindowW = 480;

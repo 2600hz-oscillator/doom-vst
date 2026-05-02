@@ -66,6 +66,21 @@ struct SpectrumConfig
 {
     BackgroundVibe vibe { BackgroundVibe::AcidwarpExe };
 
+    // DOOMTEX background controls. doomtexIndex is the manual selection
+    // (or seed when auto-advance is on). When auto-advance is on, the
+    // scene cycles internally; this field stays at the last user-applied
+    // starting texture.
+    //
+    // Defaults match the previous hard-coded behavior:
+    //   • auto-advance ON
+    //   • band 3 drives advance (1-indexed; matches old `bandAmplitudes[2]`)
+    //   • threshold 0.5 (matches old kHi=0.5; hysteresis low edge is
+    //     computed as max(0, threshold-0.1) to match old kLo=0.4 spread)
+    int   doomtexIndex          { 0 };
+    bool  doomtexAutoAdvance    { true };
+    int   doomtexAutoBand       { 3 };    // 1..kNumBands
+    float doomtexAutoThreshold  { 0.5f }; // 0..1
+
     static SpectrumConfig makeDefault() { return {}; }
 };
 

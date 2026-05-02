@@ -72,7 +72,11 @@ juce::String VisualizerState::toXmlString() const
     }
 
     auto* specXml = root.createNewChildElement("Spectrum");
-    specXml->setAttribute("vibe", static_cast<int>(s.vibe));
+    specXml->setAttribute("vibe",                 static_cast<int>(s.vibe));
+    specXml->setAttribute("doomtexIndex",         s.doomtexIndex);
+    specXml->setAttribute("doomtexAutoAdvance",   s.doomtexAutoAdvance);
+    specXml->setAttribute("doomtexAutoBand",      s.doomtexAutoBand);
+    specXml->setAttribute("doomtexAutoThreshold", static_cast<double>(s.doomtexAutoThreshold));
 
     // KillRoom and Analyzer placeholders for forward-compat XML schema.
     root.createNewChildElement("KillRoom");
@@ -111,6 +115,18 @@ void VisualizerState::fromXmlString(const juce::String& xmlString)
         }
     };
 
+    auto readSpectrumExtras = [&](juce::XmlElement* specXml)
+    {
+        s.doomtexIndex         = juce::jlimit(0, 7,
+            specXml->getIntAttribute("doomtexIndex", s.doomtexIndex));
+        s.doomtexAutoAdvance   =
+            specXml->getBoolAttribute("doomtexAutoAdvance", s.doomtexAutoAdvance);
+        s.doomtexAutoBand      = juce::jlimit(1, kNumBands,
+            specXml->getIntAttribute("doomtexAutoBand", s.doomtexAutoBand));
+        s.doomtexAutoThreshold = juce::jlimit(0.0f, 1.0f, static_cast<float>(
+            specXml->getDoubleAttribute("doomtexAutoThreshold", s.doomtexAutoThreshold)));
+    };
+
     if (current)
     {
         if (auto* globalXml = root->getChildByName("Global"))
@@ -120,6 +136,7 @@ void VisualizerState::fromXmlString(const juce::String& xmlString)
             int v = specXml->getIntAttribute("vibe", static_cast<int>(s.vibe));
             if (v >= 0 && v < kNumBackgroundVibes)
                 s.vibe = static_cast<BackgroundVibe>(v);
+            readSpectrumExtras(specXml);
         }
     }
     else // legacy DoomVizPatches: bands lived inside <Spectrum>
