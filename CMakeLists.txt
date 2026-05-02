@@ -80,19 +80,40 @@ target_link_libraries(DoomViz PRIVATE
     yaml-cpp
 )
 
-# Copy DOOM1.WAD into each plugin bundle's Resources after build
+# Copy DOOM1.WAD into each plugin bundle's Resources after build.
+#
+# `$<TARGET_BUNDLE_DIR:...>` is macOS-only — it requires a CMake bundle-type
+# target, which JUCE produces on Apple platforms. On Linux the VST3 is also
+# a folder layout (DoomViz.vst3/Contents/x86_64-linux/DoomViz.so), but
+# CMake's MODULE_LIBRARY target doesn't satisfy the bundle-dir generator
+# expression. We compute the bundle root via TARGET_FILE_DIR and skip
+# targets that aren't bundle-shaped on the current platform (Standalone /
+# AU on Linux are plain executables).
 set(WAD_SRC "${CMAKE_SOURCE_DIR}/resources/DOOM1.WAD")
 foreach(target DoomViz_VST3 DoomViz_AU DoomViz_Standalone)
-    if(TARGET ${target})
-        add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_BUNDLE_DIR:${target}>/Contents/Resources"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${WAD_SRC}"
-                "$<TARGET_BUNDLE_DIR:${target}>/Contents/Resources/DOOM1.WAD"
-            COMMENT "Bundling DOOM1.WAD into ${target}"
-        )
+    if(NOT TARGET ${target})
+        continue()
     endif()
+
+    if(APPLE)
+        set(BUNDLE_DIR_EXPR "$<TARGET_BUNDLE_DIR:${target}>")
+    else()
+        # Only the VST3 has a bundle layout on Linux. Standalone is a binary,
+        # AU doesn't exist on Linux at all.
+        if(NOT "${target}" STREQUAL "DoomViz_VST3")
+            continue()
+        endif()
+        set(BUNDLE_DIR_EXPR "$<TARGET_FILE_DIR:${target}>/../..")
+    endif()
+
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "${BUNDLE_DIR_EXPR}/Contents/Resources"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${WAD_SRC}"
+            "${BUNDLE_DIR_EXPR}/Contents/Resources/DOOM1.WAD"
+        COMMENT "Bundling DOOM1.WAD into ${target}"
+    )
 endforeach()
 
 # --- Test harness (standalone C program, not the plugin) ---
@@ -106,7 +127,7 @@ target_include_directories(render_test PRIVATE
 enable_testing()
 add_test(
     NAME render_baseline
-    COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 set_tests_properties(render_baseline PROPERTIES LABELS "integration")

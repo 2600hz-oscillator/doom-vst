@@ -85,17 +85,22 @@ tasks:
       - echo "(dist/ left untouched — committed there is the signed + notarized release artifact)"
 
   build-linux:
-    desc: Build the Linux VST3 (runs natively if on Linux, else via flox container)
+    desc: Build all Linux targets (VST3 + tests). Runs natively on Linux, else prints flox-containerize instructions. Leaves dist/ alone — that path holds the committed macOS signed binary.
     cmds:
       - |
         if [ "$(uname)" = "Linux" ]; then
           mkdir -p {{.BUILD_DIR}}-linux
-          cd {{.BUILD_DIR}}-linux && cmake .. -G Ninja
-          cmake --build . --target DoomViz_VST3
-          mkdir -p ../{{.DIST_DIR}}
-          rm -rf ../{{.DIST_DIR}}/{{.VST3_NAME}}
-          cp -R DoomViz_artefacts/VST3/{{.VST3_NAME}} ../{{.DIST_DIR}}/
-          echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
+          # Force system /usr/bin/c++ for the same reason build-mac forces
+          # /usr/bin/clang: flox's c++ from the dev env doesn't see apt-
+          # installed JUCE deps under /usr/include (X11, freetype, GTK).
+          cd {{.BUILD_DIR}}-linux
+          cmake .. -G Ninja \
+            -DCMAKE_C_COMPILER=/usr/bin/cc \
+            -DCMAKE_CXX_COMPILER=/usr/bin/c++
+          cmake --build . -j$(nproc) --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
+          cd ..
+          echo "Built {{.BUILD_DIR}}-linux/DoomViz_artefacts/VST3/{{.VST3_NAME}}"
+          echo "(dist/ left untouched — that's the committed macOS signed binary)"
         else
           echo "Cross-platform Linux builds use 'flox containerize' + container runtime."
           echo "To build a Linux VST3 from macOS:"
@@ -103,6 +108,15 @@ tasks:
           echo "  docker run --rm -v \$(pwd):/work -w /work doom-viz task build-linux"
           exit 1
         fi
+
+  test-linux:
+    desc: Run unit + integration + render_baseline tests against the build-linux directory (Linux only — VRT is macOS-only since baselines are platform-pinned)
+    deps: [build-linux]
+    preconditions:
+      - sh: '[ "$(uname)" = "Linux" ]'
+        msg: "test-linux only runs on Linux"
+    cmds:
+      - cd {{.BUILD_DIR}}-linux && ctest --output-on-failure
 
   install-mac:
     desc: Install the macOS VST3 to ~/Library/Audio/Plug-Ins/VST3/

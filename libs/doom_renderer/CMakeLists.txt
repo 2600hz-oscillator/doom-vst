@@ -34,9 +34,14 @@ target_compile_definitions(doom_renderer PRIVATE
     DOOMVIZ
 )
 
-# C standard
+# C standard. POSITION_INDEPENDENT_CODE is required so this static lib
+# can be linked into the JUCE plugin shared module (DoomViz.so on Linux,
+# DoomViz.vst3/Contents/MacOS/DoomViz on macOS). Apple's ld handles this
+# automatically, but GNU ld errors with "relocation R_X86_64_PC32 against
+# symbol ... can not be used when making a shared object" without it.
 set_target_properties(doom_renderer PROPERTIES
     C_STANDARD 99
+    POSITION_INDEPENDENT_CODE ON
 )
 
 # Suppress warnings from vintage 1997 C code
