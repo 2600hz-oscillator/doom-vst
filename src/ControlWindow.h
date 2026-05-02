@@ -10,6 +10,7 @@ class ControlPanel : public juce::Component
 public:
     ControlPanel();
 
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     // Callback when scene is selected (0, 1, 2)
