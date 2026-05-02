@@ -71,6 +71,19 @@ tasks:
       - codesign --force --deep --options runtime --timestamp --sign "{{.SIGNING_IDENTITY}}" {{.DIST_DIR}}/{{.VST3_NAME}}
       - echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
 
+  build-mac-unsigned:
+    desc: Build the macOS VST3 without code-signing (CI / local dev without a Developer ID cert). Leaves dist/ alone.
+    deps: [configure]
+    preconditions:
+      - sh: "[ \"$(uname)\" = \"Darwin\" ]"
+        msg: "build-mac-unsigned only runs on macOS"
+      - sh: "test -x /usr/bin/clang"
+        msg: "Apple Clang not found. Install: xcode-select --install"
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target DoomViz_VST3
+      - echo "Built (unsigned) {{.BUILD_DIR}}/DoomViz_artefacts/VST3/{{.VST3_NAME}}"
+      - echo "(dist/ left untouched — committed there is the signed + notarized release artifact)"
+
   build-linux:
     desc: Build the Linux VST3 (runs natively if on Linux, else via flox container)
     cmds:

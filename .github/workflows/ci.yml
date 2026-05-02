@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build + render baseline (macOS arm64)
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Install flox
+        run: |
+          curl -fsSL "https://downloads.flox.dev/by-env/stable/osx/flox-installer.pkg" -o /tmp/flox.pkg
+          sudo installer -pkg /tmp/flox.pkg -target /
+          flox --version
+
+      - name: Build VST3 (unsigned)
+        run: flox activate -- task build-mac-unsigned
+
+      - name: Render baseline test
+        run: flox activate -- task test
+
+      - name: Upload unsigned VST3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoomViz-vst3-${{ github.sha }}
+          path: build/DoomViz_artefacts/VST3/DoomViz.vst3
+          retention-days: 30
