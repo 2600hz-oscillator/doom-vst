@@ -47,18 +47,13 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
         });
     };
 
-    // Create the floating control window
-    controlWindow = std::make_unique<ControlWindow>();
+    // Create the floating control window (single-window UI; patch settings
+    // live inline rather than in a separate floating window).
+    controlWindow = std::make_unique<ControlWindow>(p.getVisualizerState());
 
-    // Create the patch settings window (hidden by default; opened via the
-    // Patch Settings button on the control panel).
-    patchWindow = std::make_unique<patch::PatchWindow>(p.getVisualizerState());
-
-    controlWindow->getPanel().onSceneChange = [this, &p](int scene)
+    controlWindow->getPanel().onSceneChange = [&p](int scene)
     {
         p.sceneOverride.store(scene, std::memory_order_relaxed);
-        if (patchWindow)
-            patchWindow->setActiveScene(scene);
     };
     controlWindow->getPanel().onToggleFullscreen = [this](bool on)
     {
@@ -66,10 +61,6 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
             enterFullscreen();
         else
             exitFullscreen();
-    };
-    controlWindow->getPanel().onTogglePatchSettings = [this]()
-    {
-        togglePatchWindow();
     };
 
     setSize(960, 600);
@@ -88,17 +79,7 @@ DoomVizEditor::~DoomVizEditor()
     stopTimer();
     if (fullscreenWindow)
         exitFullscreen();
-    patchWindow.reset();
     controlWindow.reset();
-}
-
-void DoomVizEditor::togglePatchWindow()
-{
-    if (! patchWindow) return;
-    bool nowVisible = ! patchWindow->isVisible();
-    patchWindow->setVisible(nowVisible);
-    if (nowVisible)
-        patchWindow->toFront(true);
 }
 
 void DoomVizEditor::resized()
@@ -187,13 +168,11 @@ void DoomVizEditor::timerCallback()
     // Scene-change reflection: when MIDI Program Change (or anything else that
     // bypasses the GUI button) switches the scene, the viewport publishes the
     // new index into processorRef.currentSceneIndex. Mirror that back into
-    // the patch window so its panel matches what's on screen.
+    // the control panel so the active section matches what's on screen.
     int scene = processorRef.currentSceneIndex.load(std::memory_order_relaxed);
     if (scene != lastObservedScene)
     {
         lastObservedScene = scene;
-        if (patchWindow)
-            patchWindow->setActiveScene(scene);
         if (controlWindow)
             controlWindow->getPanel().setActiveScene(scene);
     }
