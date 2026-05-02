@@ -28,7 +28,7 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
     : AudioProcessorEditor(&p),
       processorRef(p),
       viewport(p.getSignalBus(), p.getCurrentSampleRate(),
-               p.getPatchSettings(), &p.sceneOverride)
+               p.getPatchSettings(), &p.sceneOverride, &p.currentSceneIndex)
 {
     addAndMakeVisible(viewport);
 
@@ -175,12 +175,28 @@ void DoomVizEditor::exitFullscreen()
 
 void DoomVizEditor::timerCallback()
 {
+    // Display-name preview (where Fullscreen will land).
     auto name = describeTargetDisplay();
-    if (name == lastDisplayName)
-        return;
-    lastDisplayName = name;
-    if (controlWindow)
-        controlWindow->getPanel().setDisplayName(name);
+    if (name != lastDisplayName)
+    {
+        lastDisplayName = name;
+        if (controlWindow)
+            controlWindow->getPanel().setDisplayName(name);
+    }
+
+    // Scene-change reflection: when MIDI Program Change (or anything else that
+    // bypasses the GUI button) switches the scene, the viewport publishes the
+    // new index into processorRef.currentSceneIndex. Mirror that back into
+    // the patch window so its panel matches what's on screen.
+    int scene = processorRef.currentSceneIndex.load(std::memory_order_relaxed);
+    if (scene != lastObservedScene)
+    {
+        lastObservedScene = scene;
+        if (patchWindow)
+            patchWindow->setActiveScene(scene);
+        if (controlWindow)
+            controlWindow->getPanel().setActiveScene(scene);
+    }
 }
 
 juce::String DoomVizEditor::describeTargetDisplay() const

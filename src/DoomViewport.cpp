@@ -5,9 +5,12 @@
 
 DoomViewport::DoomViewport(SignalBus& bus, double sampleRate,
                            const patch::PatchSettingsStore& store,
-                           std::atomic<int>* sceneOverride)
+                           std::atomic<int>* sceneOverride,
+                           std::atomic<int>* currentSceneIndex)
     : signalBus(bus), patchStore(store),
-      pullBuffer(8192, 0.0f), sceneOverridePtr(sceneOverride)
+      pullBuffer(8192, 0.0f),
+      sceneOverridePtr(sceneOverride),
+      currentSceneIndexPtr(currentSceneIndex)
 {
     analyzer.setSampleRate(sampleRate);
     glContext.setRenderer(this);
@@ -185,14 +188,24 @@ void DoomViewport::renderOpenGL()
     if (vel > params["sector_light.all"])
         params["sector_light.all"] = vel;
 
-    // Scene switching: control window override takes priority, then MIDI PC
+    // Scene switching: control window override takes priority, then MIDI PC.
+    // After any successful switch, mirror the new index into the shared atomic
+    // so the editor's polling Timer can update the patch window even when the
+    // switch was driven by MIDI rather than the GUI.
+    auto publishCurrent = [this](int idx) {
+        if (currentSceneIndexPtr)
+            currentSceneIndexPtr->store(idx, std::memory_order_relaxed);
+    };
+
     if (sceneOverridePtr)
     {
         int override = sceneOverridePtr->load(std::memory_order_relaxed);
         if (override >= 0 && override != lastSceneOverride && engine && engine->isMapLoaded())
         {
             lastSceneOverride = override;
-            sceneManager.switchTo(override % sceneManager.getNumScenes(), *engine);
+            int idx = override % sceneManager.getNumScenes();
+            sceneManager.switchTo(idx, *engine);
+            publishCurrent(idx);
         }
     }
 
@@ -200,7 +213,9 @@ void DoomViewport::renderOpenGL()
     if (pc != lastProgramChange && engine && engine->isMapLoaded())
     {
         lastProgramChange = pc;
-        sceneManager.switchTo(pc % sceneManager.getNumScenes(), *engine);
+        int idx = pc % sceneManager.getNumScenes();
+        sceneManager.switchTo(idx, *engine);
+        publishCurrent(idx);
     }
 
     juce::gl::glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
