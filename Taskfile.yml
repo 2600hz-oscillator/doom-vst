@@ -159,6 +159,39 @@ tasks:
       - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_integration_tests render_test
       - cd {{.BUILD_DIR}} && ctest -L integration --output-on-failure
 
+  vrt:
+    desc: Build + run the visual regression suite (compares against test/vrt/baselines/)
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_vrt_runner
+      - rm -rf test/vrt/output
+      - mkdir -p test/vrt/output
+      - python3 test/vrt/run_vrt.py
+          --runner {{.BUILD_DIR}}/doomviz_vrt_runner_artefacts/doomviz_vrt_runner
+          --wad resources/DOOM1.WAD
+          --audio-dir test/vrt/audio
+          --baseline-dir test/vrt/baselines
+          --output-dir test/vrt/output
+          --repo-root .
+
+  vrt-update-baselines:
+    desc: Run the VRT runner and copy its output into test/vrt/baselines/ (use to bootstrap or refresh)
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_vrt_runner
+      - rm -rf test/vrt/output
+      - mkdir -p test/vrt/output
+      - python3 test/vrt/run_vrt.py
+          --runner {{.BUILD_DIR}}/doomviz_vrt_runner_artefacts/doomviz_vrt_runner
+          --wad resources/DOOM1.WAD
+          --audio-dir test/vrt/audio
+          --baseline-dir test/vrt/baselines
+          --output-dir test/vrt/output
+          --repo-root . || true
+      - mkdir -p test/vrt/baselines
+      - rsync -a --delete --include='*/' --include='frame_*.ppm' --exclude='*' test/vrt/output/ test/vrt/baselines/
+      - echo "Baselines refreshed under test/vrt/baselines/. Inspect, then commit."
+
   clean:
     desc: Remove build artifacts (keeps dist/)
     cmds:

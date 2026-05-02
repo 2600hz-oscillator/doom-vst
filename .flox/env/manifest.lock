@@ -20,6 +20,9 @@
           "x86_64-linux"
         ]
       },
+      "ffmpeg": {
+        "pkg-path": "ffmpeg"
+      },
       "freetype": {
         "pkg-path": "freetype",
         "systems": [
@@ -362,6 +365,150 @@
         "devdoc": "/nix/store/jm6irg81cc0hqg43l39lkxr6pb0w2xk5-curl-8.17.0-devdoc",
         "man": "/nix/store/ijd0yybyzwm98d3q6x7a9cyixgxk0i5d-curl-8.17.0-man",
         "out": "/nix/store/8idis3j5l13c3x74jl8xly0k4qyk9mx6-curl-8.17.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/206fjllg1a77g4dczjc6i9lg8vn3amfm-ffmpeg-8.0.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ffmpeg-8.0",
+      "pname": "ffmpeg",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:02:38.935728Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.0",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/xkly4if0pl4jrpnwl66qq6hsa30jqism-ffmpeg-8.0-bin",
+        "data": "/nix/store/s6kgda4wzpzn6z33k7anjz546xq14p1v-ffmpeg-8.0-data",
+        "dev": "/nix/store/lmvr3707jh523597vq6daaaxm2w4bdnm-ffmpeg-8.0-dev",
+        "doc": "/nix/store/axxwak38574iy3zxa940pbiyvihzgyix-ffmpeg-8.0-doc",
+        "lib": "/nix/store/4iyg64p917wzvmr00jmvijm5lkhb5ra5-ffmpeg-8.0-lib",
+        "man": "/nix/store/blf6kdac8af359h33095bp660jh1k63d-ffmpeg-8.0-man",
+        "out": "/nix/store/wwm8rsnhb3w96iw4jnq4vp9hh3sgs08g-ffmpeg-8.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/x5ny32cm2362c8vwszgvrc4pq8kj589m-ffmpeg-8.0.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ffmpeg-8.0",
+      "pname": "ffmpeg",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:18:01.642229Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.0",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/h1ki3gm02fzxlqk7dzxiy5k4lf2rggv3-ffmpeg-8.0-bin",
+        "data": "/nix/store/a16jj57mlq8g24vb2pcm04w0d3jjqa9m-ffmpeg-8.0-data",
+        "dev": "/nix/store/lvdqvspcrg1252n8xi4pvml91iiy38vf-ffmpeg-8.0-dev",
+        "doc": "/nix/store/biibdc36nq5hrcimspkc9m3s061qni2s-ffmpeg-8.0-doc",
+        "lib": "/nix/store/s9qxhpy05fpq44jl3fyxz130pdvidqby-ffmpeg-8.0-lib",
+        "man": "/nix/store/hxpbigvydy94bl4i32znv924cxbb3x6a-ffmpeg-8.0-man",
+        "out": "/nix/store/j35y1nba21xv5hjn3a16bb4qa63sy8r2-ffmpeg-8.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/9wlanjk2zsr9g1bl4djljnn9ryaihqm8-ffmpeg-8.0.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ffmpeg-8.0",
+      "pname": "ffmpeg",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:34:54.191032Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.0",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/8vm16l3qxpylyyvnyd35qgypkjjbbja3-ffmpeg-8.0-bin",
+        "data": "/nix/store/k3wzljhls4bn42m5cv0nz80rzai7nadd-ffmpeg-8.0-data",
+        "dev": "/nix/store/5jn79m47i62srkzw58yjf344ixbvhrqb-ffmpeg-8.0-dev",
+        "doc": "/nix/store/sb2g54v1v7pq2r6rl2r6mjdnq98pfr5f-ffmpeg-8.0-doc",
+        "lib": "/nix/store/rv5rv5i250yq6shfbqlbcyqcncdr0wzl-ffmpeg-8.0-lib",
+        "man": "/nix/store/fnsva43bp7w1p540q9ylrq30ymhfy43w-ffmpeg-8.0-man",
+        "out": "/nix/store/a1rbfgik57gm7mc89szlxkb2khqf953r-ffmpeg-8.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/jxncg4z10xmzssbg06xpgkcd4fc1ifj2-ffmpeg-8.0.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "ffmpeg-8.0",
+      "pname": "ffmpeg",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:50:19.316851Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.0",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/7nfpzp8f2jadvw8ph7qfjjn7f79lgn8w-ffmpeg-8.0-bin",
+        "data": "/nix/store/hkv9pf4gvr9bkhb4vzjcycylry6isr4g-ffmpeg-8.0-data",
+        "dev": "/nix/store/c1sg6zbmdq5pc8bw3h58563w7aw8p2c3-ffmpeg-8.0-dev",
+        "doc": "/nix/store/3czk7xmcam9518cnaf4b7gys6szbr0rf-ffmpeg-8.0-doc",
+        "lib": "/nix/store/smns0ny2jjfs4vm2y4zv0bdanwx00fdy-ffmpeg-8.0-lib",
+        "man": "/nix/store/ac8d8qc9p6qgy7mlk4y4dqlz105p6aki-ffmpeg-8.0-man",
+        "out": "/nix/store/s5s7arjvlhmcghd8q8lzp76wv79l42xh-ffmpeg-8.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

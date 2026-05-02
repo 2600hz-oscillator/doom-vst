@@ -205,3 +205,46 @@ target_link_libraries(doomviz_integration_tests PRIVATE
 catch_discover_tests(doomviz_integration_tests
     PROPERTIES LABELS "integration"
 )
+
+# --- VRT runner (no Catch2; standalone tool driven by the Python harness) ---
+juce_add_console_app(doomviz_vrt_runner
+    PRODUCT_NAME "DoomViz VRT Runner"
+)
+
+target_sources(doomviz_vrt_runner PRIVATE
+    test/vrt/vrt_runner.cpp
+    src/audio/SignalBus.cpp
+    src/audio/AudioAnalyzer.cpp
+    src/routing/RouteConfig.cpp
+    src/routing/SignalRouter.cpp
+    src/patch/PatchSettingsStore.cpp
+    src/doom/DoomEngine.cpp
+    src/scenes/SceneManager.cpp
+    src/scenes/KillRoomScene.cpp
+    src/scenes/AnalyzerRoomScene.cpp
+    src/scenes/Spectrum2Scene.cpp
+)
+
+target_include_directories(doomviz_vrt_runner PRIVATE
+    src
+    libs/doom_renderer/include
+    extern/yaml-cpp/include
+)
+
+target_compile_definitions(doomviz_vrt_runner PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+)
+
+target_link_libraries(doomviz_vrt_runner PRIVATE
+    juce::juce_core
+    juce::juce_audio_basics
+    juce::juce_audio_formats
+    juce::juce_audio_processors
+    juce::juce_data_structures
+    juce::juce_dsp
+    juce::juce_events
+    doom_renderer
+    yaml-cpp
+)
