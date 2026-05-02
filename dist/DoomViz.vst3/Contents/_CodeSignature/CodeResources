@@ -15,15 +15,6 @@
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>MacOS/DoomViz 3</key>
-		<dict>
-			<key>cdhash</key>
-			<data>
-			h/FK834U4oVPR2uUkECY/d7jQjI=
-			</data>
-			<key>requirement</key>
-			<string>cdhash H"87f14af37e14e2854f476b94904098fddee34232"</string>
-		</dict>
 		<key>Resources/DOOM1.WAD</key>
 		<dict>
 			<key>hash2</key>

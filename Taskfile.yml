@@ -4,6 +4,14 @@ vars:
   BUILD_DIR: build
   DIST_DIR: dist
   VST3_NAME: DoomViz.vst3
+  # Developer ID identity used by the macOS codesign step. Override per-host
+  # by exporting SIGNING_IDENTITY in your shell. Leave as the dash to ad-hoc
+  # sign on machines that don't have a Developer ID cert installed; ad-hoc
+  # signing is enough to load locally but is rejected by Gatekeeper / cannot
+  # be notarized.
+  SIGNING_IDENTITY: '{{.SIGNING_IDENTITY | default "Developer ID Application: Tristan Mayshark (PHY35R5456)"}}'
+  # Keychain profile name created by `xcrun notarytool store-credentials`.
+  NOTARY_PROFILE: '{{.NOTARY_PROFILE | default "doomviz-notary"}}'
 
 tasks:
   default:
@@ -57,7 +65,10 @@ tasks:
       # when the source tree lives under ~/Documents (iCloud-synced). Bitwig
       # and other hosts will silently skip plugins with these xattrs.
       - xattr -cr {{.DIST_DIR}}/{{.VST3_NAME}}
-      - codesign --force --deep --sign - {{.DIST_DIR}}/{{.VST3_NAME}}
+      # Remove iCloud cloud-conflict files (e.g. "DoomViz 2", "DoomViz 3")
+      # that codesign rejects as unrecognized subcomponents.
+      - find {{.DIST_DIR}}/{{.VST3_NAME}} \( -name '* [0-9]' -o -name '* [0-9][0-9]' \) -print0 | xargs -0 -I{} rm -rf "{}"
+      - codesign --force --deep --options runtime --timestamp --sign "{{.SIGNING_IDENTITY}}" {{.DIST_DIR}}/{{.VST3_NAME}}
       - echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
 
   build-linux:
@@ -92,8 +103,27 @@ tasks:
       # cp -R re-attaches the iCloud / fileprovider xattrs from the source
       # tree, so strip them again at the install destination before signing.
       - xattr -cr ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
-      - codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
+      - find ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}} \( -name '* [0-9]' -o -name '* [0-9][0-9]' \) -print0 | xargs -0 -I{} rm -rf "{}"
+      - codesign --force --deep --options runtime --timestamp --sign "{{.SIGNING_IDENTITY}}" ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
       - echo "Installed to ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}"
+
+  notarize-mac:
+    desc: Sign + notarize + staple the dist VST3 (release builds)
+    deps: [build-mac]
+    preconditions:
+      - sh: "[ \"$(uname)\" = \"Darwin\" ]"
+        msg: "notarize-mac only runs on macOS"
+      - sh: "xcrun notarytool history --keychain-profile {{.NOTARY_PROFILE}} >/dev/null 2>&1"
+        msg: "notarytool keychain profile '{{.NOTARY_PROFILE}}' not set up. Run: xcrun notarytool store-credentials {{.NOTARY_PROFILE}} --apple-id <id> --team-id <team> --password <app-specific-pw>"
+    cmds:
+      # notarytool wants a single archive, not a bundle directly.
+      - rm -f /tmp/DoomViz_notarize.zip
+      - ditto -c -k --keepParent {{.DIST_DIR}}/{{.VST3_NAME}} /tmp/DoomViz_notarize.zip
+      - xcrun notarytool submit /tmp/DoomViz_notarize.zip --keychain-profile {{.NOTARY_PROFILE}} --wait
+      - xcrun stapler staple {{.DIST_DIR}}/{{.VST3_NAME}}
+      - xcrun stapler validate {{.DIST_DIR}}/{{.VST3_NAME}}
+      - rm -f /tmp/DoomViz_notarize.zip
+      - echo "Notarized + stapled {{.DIST_DIR}}/{{.VST3_NAME}}"
 
   test:
     desc: Run the render baseline test
