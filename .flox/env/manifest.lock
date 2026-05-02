@@ -62,6 +62,9 @@
       "ninja": {
         "pkg-path": "ninja"
       },
+      "pillow": {
+        "pkg-path": "python312Packages.pillow"
+      },
       "pkg-config": {
         "pkg-path": "pkg-config"
       },
@@ -1435,6 +1438,126 @@
       ],
       "outputs": {
         "out": "/nix/store/nib1r4k4cqph7zjjnbfc1d6cbg11qr76-ninja-1.13.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python312Packages.pillow",
+      "broken": false,
+      "derivation": "/nix/store/yzjmxhy5cadifj627pzhp3549y70frw1-python3.12-pillow-12.0.0.drv",
+      "description": "Friendly PIL fork (Python Imaging Library)",
+      "install_id": "pillow",
+      "license": "MIT-CMU",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "python3.12-pillow-12.0.0",
+      "pname": "pillow",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:03:26.041725Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "12.0.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/cf800ad6nm89k5kvza87ncfginizwl2c-python3.12-pillow-12.0.0-dist",
+        "out": "/nix/store/8wznnwbvg1k7r8035yc2b6d9rwxaf43k-python3.12-pillow-12.0.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python312Packages.pillow",
+      "broken": false,
+      "derivation": "/nix/store/bsls1lf48zpg92nb9v4k6vklibng0bwi-python3.12-pillow-12.0.0.drv",
+      "description": "Friendly PIL fork (Python Imaging Library)",
+      "install_id": "pillow",
+      "license": "MIT-CMU",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "python3.12-pillow-12.0.0",
+      "pname": "pillow",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:19:16.880958Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "12.0.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/xfzgfl2f7j1115041pq1ra3lnmwvhr2a-python3.12-pillow-12.0.0-dist",
+        "out": "/nix/store/6w7xh34xj26w884zmmiwlyawshww6hd4-python3.12-pillow-12.0.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python312Packages.pillow",
+      "broken": false,
+      "derivation": "/nix/store/abxcpwgizmhip7jdzgqiaj3dwbg8igq3-python3.12-pillow-12.0.0.drv",
+      "description": "Friendly PIL fork (Python Imaging Library)",
+      "install_id": "pillow",
+      "license": "MIT-CMU",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "python3.12-pillow-12.0.0",
+      "pname": "pillow",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:35:45.709691Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "12.0.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/qv1fjqcgsciirgmsw7p4c71lz7chwfxk-python3.12-pillow-12.0.0-dist",
+        "out": "/nix/store/98l9smipp83qaap0dzb4c7mh5p79ih1l-python3.12-pillow-12.0.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python312Packages.pillow",
+      "broken": false,
+      "derivation": "/nix/store/9bsbsz47jwsqyybr13bigflha2a1ad26-python3.12-pillow-12.0.0.drv",
+      "description": "Friendly PIL fork (Python Imaging Library)",
+      "install_id": "pillow",
+      "license": "MIT-CMU",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "name": "python3.12-pillow-12.0.0",
+      "pname": "pillow",
+      "rev": "c0b0e0fddf73fd517c3471e546c0df87a42d53f4",
+      "rev_count": 917670,
+      "rev_date": "2025-12-28T06:08:05Z",
+      "scrape_date": "2025-12-29T03:51:35.451597Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "12.0.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/hhqs1gwswl59m310674id56ln0bmm04h-python3.12-pillow-12.0.0-dist",
+        "out": "/nix/store/341slf4ary2700z1b20186qyaqp46q2h-python3.12-pillow-12.0.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

@@ -14,6 +14,8 @@ build/
 /test/vrt/output/
 # Per-frame diff PPMs the VRT runner drops next to baselines on a failure
 /test/vrt/baselines/diffs/
+# VRT baseline gallery (built by Pages workflow on each main push; not committed)
+/docs/vrt/
 
 # Reference source (not part of build)
 resources/DOOM/
