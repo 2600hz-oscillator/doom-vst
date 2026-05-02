@@ -15,37 +15,71 @@ namespace
     constexpr auto kGoldText    = juce::uint32 { 0xfff0d878 };
     constexpr auto kDimGold     = juce::uint32 { 0xff786850 };
     constexpr auto kBlackText   = juce::uint32 { 0xff050200 };
+
+    constexpr int kTitleH       = 32;
+    constexpr int kHeaderH      = 18;
+    constexpr int kRowH         = 28;
+    constexpr int kBtnH         = 32;
+    constexpr int kSectionGap   = 10;
+    constexpr int kPad          = 10;
+
+    // 8 rows × 26 px row height + 20 px header + 2 px gap
+    constexpr int kBandRowsH    = 20 + 2 + 8 * 26;
+
+    // Spectrum section (Phase 2: just the vibe combo). Phase 3 will grow.
+    constexpr int kSpectrumSectionH = 30;
+    constexpr int kPlaceholderH     = 30;
+
+    constexpr int kWindowW = 480;
+
+    void styleSceneButton(juce::TextButton& btn, bool active)
+    {
+        if (active)
+        {
+            btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kAccentRed));
+            btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kBlackText));
+        }
+        else
+        {
+            btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kStoneLight));
+            btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kDimGold));
+        }
+    }
 }
 
 // --- ControlPanel ---
 
-ControlPanel::ControlPanel()
+ControlPanel::ControlPanel(patch::VisualizerState& s)
+    : state(s)
 {
-    auto setupButton = [this](juce::TextButton& btn, int index)
+    auto styleHeader = [](juce::Label& l, juce::Colour col, float size, bool bold)
     {
-        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(kStoneLight));
-        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(kDimGold));
+        l.setColour(juce::Label::textColourId, col);
+        l.setFont(juce::FontOptions("Courier New", size,
+                                    bold ? juce::Font::bold : 0));
+        l.setJustificationType(juce::Justification::centredLeft);
+    };
+
+    auto setupSceneButton = [this](juce::TextButton& btn, int index)
+    {
+        styleSceneButton(btn, false);
         btn.onClick = [this, index]() { selectScene(index); };
         addAndMakeVisible(btn);
     };
+    setupSceneButton(sceneA, 0);
+    setupSceneButton(sceneB, 1);
+    setupSceneButton(sceneC, 2);
+    styleSceneButton(sceneA, true);  // start with KillRoom highlighted
 
-    setupButton(sceneA, 0);
-    setupButton(sceneB, 1);
-    setupButton(sceneC, 2);
-
-    sceneLabel.setColour(juce::Label::textColourId, juce::Colour(kDimGold));
-    sceneLabel.setFont(juce::FontOptions("Courier New", 14.0f, juce::Font::bold));
+    styleHeader(sceneLabel,  juce::Colour(kDimGold),  14.0f, true);
+    sceneLabel.setText("SCENE:", juce::dontSendNotification);
     addAndMakeVisible(sceneLabel);
 
-    activeLabel.setColour(juce::Label::textColourId, juce::Colour(kGoldText));
-    activeLabel.setFont(juce::FontOptions("Courier New", 18.0f, juce::Font::bold));
+    styleHeader(activeLabel, juce::Colour(kGoldText), 18.0f, true);
+    activeLabel.setText("KILL ROOM", juce::dontSendNotification);
     addAndMakeVisible(activeLabel);
 
-    // Highlight initial scene (Kill Room) in red
-    sceneA.setColour(juce::TextButton::buttonColourId, juce::Colour(kAccentRed));
-    sceneA.setColour(juce::TextButton::textColourOffId, juce::Colour(kBlackText));
-
-    fullscreenBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(kStoneLight));
+    fullscreenBtn.setColour(juce::TextButton::buttonColourId,  juce::Colour(kStoneLight));
     fullscreenBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(kGoldText));
     fullscreenBtn.onClick = [this]()
     {
@@ -54,76 +88,120 @@ ControlPanel::ControlPanel()
         if (onToggleFullscreen)
             onToggleFullscreen(isFullscreen);
     };
-    fullscreenBtn.setButtonText("FULLSCREEN");
     addAndMakeVisible(fullscreenBtn);
 
-    patchBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(kStoneLight));
-    patchBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(kGoldText));
-    patchBtn.onClick = [this]()
-    {
-        if (onTogglePatchSettings) onTogglePatchSettings();
-    };
-    patchBtn.setButtonText("PATCH SETTINGS");
-    addAndMakeVisible(patchBtn);
-
-    displayLabel.setColour(juce::Label::textColourId, juce::Colour(kDimGold));
-    displayLabel.setFont(juce::FontOptions("Courier New", 11.0f, juce::Font::bold));
-    displayLabel.setJustificationType(juce::Justification::centredLeft);
+    styleHeader(displayLabel, juce::Colour(kDimGold), 11.0f, true);
+    displayLabel.setText("DISPLAY: -", juce::dontSendNotification);
     addAndMakeVisible(displayLabel);
 
-    setSize(360, 280);
+    styleHeader(globalHeader, juce::Colour(kBevelHi), 13.0f, true);
+    globalHeader.setText("-- GLOBAL --", juce::dontSendNotification);
+    addAndMakeVisible(globalHeader);
+
+    styleHeader(sceneHeader, juce::Colour(kBevelHi), 13.0f, true);
+    sceneHeader.setText("-- KILL ROOM --", juce::dontSendNotification);
+    addAndMakeVisible(sceneHeader);
+
+    addAndMakeVisible(bandRows);
+    addChildComponent(spectrumSection);
+    addChildComponent(killRoomSection);
+    addChildComponent(analyzerSection);
+
+    bandRows.onEdit        = [this]() { markDirty(); };
+    spectrumSection.onEdit = [this]() { markDirty(); };
+
+    auto setupFooterButton = [](juce::TextButton& btn)
+    {
+        btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kStoneLight));
+        btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kGoldText));
+        btn.setColour(juce::TextButton::textColourOnId,    juce::Colour(kDimGold));
+    };
+    setupFooterButton(applyBtn);
+    setupFooterButton(revertBtn);
+    applyBtn.setEnabled(false);
+    revertBtn.setEnabled(false);
+    applyBtn.onClick  = [this]() { applyChanges();  };
+    revertBtn.onClick = [this]() { revertChanges(); };
+    addAndMakeVisible(applyBtn);
+    addAndMakeVisible(revertBtn);
+
+    loadFromState();
+    setActiveScene(0);
+
+    // Final size: title + scene block + global section + active scene section
+    // + footer + padding. Tuned to fit 8 band rows + the spectrum section
+    // without scrolling.
+    int contentH = kTitleH + 8                     // title strip + gap
+                 + 28 + 10                          // scene label row
+                 + kBtnH + 10                       // scene buttons
+                 + kBtnH + 8                        // fullscreen
+                 + 16 + kSectionGap                 // display label + gap
+                 + kHeaderH + 4 + kBandRowsH        // GLOBAL section
+                 + kSectionGap
+                 + kHeaderH + 4 + kSpectrumSectionH // active scene section
+                 + kSectionGap
+                 + kBtnH                            // footer apply/revert
+                 + kPad;                            // bottom pad
+    setSize(kWindowW, contentH);
+}
+
+juce::Component* ControlPanel::activeSection()
+{
+    switch (activeScene)
+    {
+        case 0:  return &killRoomSection;
+        case 1:  return &analyzerSection;
+        case 2:  return &spectrumSection;
+        default: return &killRoomSection;
+    }
 }
 
 void ControlPanel::paint(juce::Graphics& g)
 {
     auto b = getLocalBounds();
-
-    // Stone background.
     g.fillAll(juce::Colour(kStoneDark));
 
-    // Outer bevel: 2px inset, gold top+left, near-black bottom+right.
+    // Outer bevel.
     auto drawBevel = [&](juce::Rectangle<int> r, juce::Colour hi, juce::Colour lo, int thick)
     {
         for (int i = 0; i < thick; ++i)
         {
             g.setColour(hi);
-            g.fillRect(r.getX(), r.getY() + i, r.getWidth() - i, 1);                       // top
-            g.fillRect(r.getX() + i, r.getY(), 1, r.getHeight() - i);                      // left
+            g.fillRect(r.getX(), r.getY() + i, r.getWidth() - i, 1);
+            g.fillRect(r.getX() + i, r.getY(), 1, r.getHeight() - i);
             g.setColour(lo);
-            g.fillRect(r.getX() + i, r.getBottom() - 1 - i, r.getWidth() - i, 1);          // bottom
-            g.fillRect(r.getRight() - 1 - i, r.getY() + i, 1, r.getHeight() - i);          // right
+            g.fillRect(r.getX() + i, r.getBottom() - 1 - i, r.getWidth() - i, 1);
+            g.fillRect(r.getRight() - 1 - i, r.getY() + i, 1, r.getHeight() - i);
         }
     };
     drawBevel(b, juce::Colour(kBevelHi), juce::Colour(kBevelLo), 2);
 
-    // Title strip across the top (DOOMVIZ in red on dark, with bevel underline).
-    auto title = b.reduced(2).removeFromTop(32);
+    // Title strip.
+    auto title = b.reduced(2).removeFromTop(kTitleH);
     g.setColour(juce::Colour(0xff15100a));
     g.fillRect(title);
     g.setColour(juce::Colour(kTitleRed));
     g.setFont(juce::FontOptions("Courier New", 22.0f, juce::Font::bold));
     g.drawText("D O O M V I Z", title, juce::Justification::centred, false);
-    // Sub-bevel under title strip.
     g.setColour(juce::Colour(kBevelLo));
-    g.fillRect(title.getX(), title.getBottom(), title.getWidth(), 1);
+    g.fillRect(title.getX(), title.getBottom(),     title.getWidth(), 1);
     g.setColour(juce::Colour(kBevelHi));
     g.fillRect(title.getX(), title.getBottom() + 1, title.getWidth(), 1);
 }
 
 void ControlPanel::resized()
 {
-    // Reserve the top 32 px for the painted title strip; the rest is content.
-    auto area = getLocalBounds().reduced(10);
-    area.removeFromTop(32);     // skip painted title strip
-    area.removeFromTop(8);      // breathing room under the bevel-line
+    auto area = getLocalBounds().reduced(kPad);
+    area.removeFromTop(kTitleH);   // skip painted title strip
+    area.removeFromTop(8);
 
-    auto topRow = area.removeFromTop(28);
-    sceneLabel.setBounds(topRow.removeFromLeft(60));
-    activeLabel.setBounds(topRow);
+    auto sceneRow = area.removeFromTop(28);
+    sceneLabel.setBounds(sceneRow.removeFromLeft(70));
+    activeLabel.setBounds(sceneRow);
 
     area.removeFromTop(10);
 
-    auto btnRow = area.removeFromTop(36);
+    auto btnRow = area.removeFromTop(kBtnH);
     int btnW = (btnRow.getWidth() - 10) / 3;
     sceneA.setBounds(btnRow.removeFromLeft(btnW));
     btnRow.removeFromLeft(5);
@@ -132,46 +210,70 @@ void ControlPanel::resized()
     sceneC.setBounds(btnRow);
 
     area.removeFromTop(10);
-    fullscreenBtn.setBounds(area.removeFromTop(36));
+    fullscreenBtn.setBounds(area.removeFromTop(kBtnH));
     area.removeFromTop(8);
-    patchBtn.setBounds(area.removeFromTop(36));
-    area.removeFromTop(10);
     displayLabel.setBounds(area.removeFromTop(16));
+
+    area.removeFromTop(kSectionGap);
+
+    globalHeader.setBounds(area.removeFromTop(kHeaderH));
+    area.removeFromTop(4);
+    bandRows.setBounds(area.removeFromTop(kBandRowsH));
+
+    area.removeFromTop(kSectionGap);
+
+    sceneHeader.setBounds(area.removeFromTop(kHeaderH));
+    area.removeFromTop(4);
+    auto sectionBounds = area.removeFromTop(kSpectrumSectionH);
+    spectrumSection.setBounds(sectionBounds);
+    killRoomSection.setBounds(sectionBounds);
+    analyzerSection.setBounds(sectionBounds);
+
+    area.removeFromTop(kSectionGap);
+
+    auto footer = area.removeFromTop(kBtnH);
+    revertBtn.setBounds(footer.removeFromLeft(100));
+    applyBtn.setBounds(footer.removeFromRight(100));
 }
 
 void ControlPanel::selectScene(int index)
 {
-    // Reset all button colors
-    auto resetBtn = [](juce::TextButton& btn)
-    {
-        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(kStoneLight));
-        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(kDimGold));
-    };
-    resetBtn(sceneA);
-    resetBtn(sceneB);
-    resetBtn(sceneC);
-
-    // Highlight selected
-    auto highlightBtn = [](juce::TextButton& btn)
-    {
-        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(kAccentRed));
-        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(kBlackText));
-    };
-
-    const char* names[] = { "Kill Room", "Analyzer", "Doom Spectrum" };
-
-    switch (index)
-    {
-        case 0: highlightBtn(sceneA); break;
-        case 1: highlightBtn(sceneB); break;
-        case 2: highlightBtn(sceneC); break;
-    }
-
-    if (index >= 0 && index < 3)
-        activeLabel.setText(names[index], juce::dontSendNotification);
-
+    setActiveScene(index);
     if (onSceneChange)
         onSceneChange(index);
+}
+
+void ControlPanel::highlightScene(int index)
+{
+    styleSceneButton(sceneA, index == 0);
+    styleSceneButton(sceneB, index == 1);
+    styleSceneButton(sceneC, index == 2);
+
+    static const char* kSceneLabels[]  = { "KILL ROOM", "ANALYZER", "DOOM SPECTRUM" };
+    static const char* kSectionLabels[]= { "-- KILL ROOM --", "-- ANALYZER --", "-- DOOM SPECTRUM --" };
+    if (index >= 0 && index < 3)
+    {
+        activeLabel.setText(kSceneLabels[index],  juce::dontSendNotification);
+        sceneHeader.setText(kSectionLabels[index], juce::dontSendNotification);
+    }
+}
+
+void ControlPanel::setActiveScene(int sceneIndex)
+{
+    if (sceneIndex < 0 || sceneIndex > 2) return;
+
+    // Switching scenes with pending edits silently reverts (per spec) so the
+    // user doesn't accidentally overwrite scene-A config from scene-B's UI.
+    if (dirty)
+        revertChanges();
+
+    activeScene = sceneIndex;
+    highlightScene(sceneIndex);
+
+    // Show only the matching section component.
+    spectrumSection.setVisible(sceneIndex == 2);
+    killRoomSection.setVisible(sceneIndex == 0);
+    analyzerSection.setVisible(sceneIndex == 1);
 }
 
 void ControlPanel::setFullscreenState(bool fullscreen)
@@ -179,49 +281,61 @@ void ControlPanel::setFullscreenState(bool fullscreen)
     if (isFullscreen == fullscreen)
         return;
     isFullscreen = fullscreen;
-    fullscreenBtn.setButtonText(isFullscreen ? "Exit Fullscreen" : "Fullscreen");
+    fullscreenBtn.setButtonText(isFullscreen ? "EXIT FULLSCREEN" : "FULLSCREEN");
 }
 
 void ControlPanel::setDisplayName(const juce::String& name)
 {
-    displayLabel.setText("Display: " + name, juce::dontSendNotification);
+    displayLabel.setText("DISPLAY: " + name, juce::dontSendNotification);
 }
 
-void ControlPanel::setActiveScene(int sceneIndex)
+void ControlPanel::markDirty()
 {
-    // Same UI update as selectScene, minus firing onSceneChange — used to
-    // reflect non-GUI scene switches (e.g. MIDI Program Change) back into
-    // the button highlighting and active-label.
-    auto resetBtn = [](juce::TextButton& btn)
-    {
-        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(kStoneLight));
-        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(kDimGold));
-    };
-    auto highlightBtn = [](juce::TextButton& btn)
-    {
-        btn.setColour(juce::TextButton::buttonColourId, juce::Colour(kAccentRed));
-        btn.setColour(juce::TextButton::textColourOffId, juce::Colour(kBlackText));
-    };
-    resetBtn(sceneA); resetBtn(sceneB); resetBtn(sceneC);
+    dirty = true;
+    applyBtn.setEnabled(true);
+    revertBtn.setEnabled(true);
+}
 
-    const char* names[] = { "Kill Room", "Analyzer", "Doom Spectrum" };
-    switch (sceneIndex)
-    {
-        case 0: highlightBtn(sceneA); break;
-        case 1: highlightBtn(sceneB); break;
-        case 2: highlightBtn(sceneC); break;
-        default: break;
-    }
-    if (sceneIndex >= 0 && sceneIndex < 3)
-        activeLabel.setText(names[sceneIndex], juce::dontSendNotification);
+void ControlPanel::applyChanges()
+{
+    auto g = bandRows.buildConfig(state.getGlobal());
+    state.setGlobal(g);
+
+    // Per-scene state. Only Spectrum has editable fields right now.
+    auto s = spectrumSection.buildConfig(state.getSpectrum());
+    state.setSpectrum(s);
+
+    // Reflect any clamping back into the UI so what's shown matches what
+    // the renderer actually got.
+    bandRows.loadFromState(g);
+    spectrumSection.loadFromState(s);
+
+    dirty = false;
+    applyBtn.setEnabled(false);
+    revertBtn.setEnabled(false);
+}
+
+void ControlPanel::revertChanges()
+{
+    loadFromState();
+    dirty = false;
+    applyBtn.setEnabled(false);
+    revertBtn.setEnabled(false);
+}
+
+void ControlPanel::loadFromState()
+{
+    bandRows.loadFromState(state.getGlobal());
+    spectrumSection.loadFromState(state.getSpectrum());
 }
 
 // --- ControlWindow ---
 
-ControlWindow::ControlWindow()
+ControlWindow::ControlWindow(patch::VisualizerState& s)
     : DocumentWindow("DoomViz Controls",
                      juce::Colour(0xff1a1a1a),
-                     DocumentWindow::closeButton | DocumentWindow::minimiseButton)
+                     DocumentWindow::closeButton | DocumentWindow::minimiseButton),
+      panel(s)
 {
     setContentNonOwned(&panel, true);
     setResizable(false, false);
