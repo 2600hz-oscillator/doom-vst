@@ -50,7 +50,7 @@ target_sources(DoomViz PRIVATE
     src/scenes/KillRoomScene.cpp
     src/scenes/AnalyzerRoomScene.cpp
     src/scenes/Spectrum2Scene.cpp
-    src/patch/PatchSettingsStore.cpp
+    src/patch/VisualizerState.cpp
     src/patch/PatchWindow.cpp
     src/patch/SpectrumPatchPanel.cpp
     src/patch/PlaceholderPatchPanel.cpp
@@ -148,14 +148,14 @@ target_sources(doomviz_unit_tests PRIVATE
     test/unit/test_midi_handler.cpp
     test/unit/test_route_config.cpp
     test/unit/test_signal_router.cpp
-    test/unit/test_patch_settings_store.cpp
+    test/unit/test_visualizer_state.cpp
     test/unit/test_sprite_catalog.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
     src/audio/MidiHandler.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
-    src/patch/PatchSettingsStore.cpp
+    src/patch/VisualizerState.cpp
 )
 
 target_include_directories(doomviz_unit_tests PRIVATE
@@ -197,7 +197,7 @@ target_sources(doomviz_integration_tests PRIVATE
     src/PluginProcessor.cpp
     src/audio/SignalBus.cpp
     src/audio/MidiHandler.cpp
-    src/patch/PatchSettingsStore.cpp
+    src/patch/VisualizerState.cpp
 )
 
 target_include_directories(doomviz_integration_tests PRIVATE
@@ -238,7 +238,7 @@ target_sources(doomviz_vrt_runner PRIVATE
     src/audio/AudioAnalyzer.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
-    src/patch/PatchSettingsStore.cpp
+    src/patch/VisualizerState.cpp
     src/doom/DoomEngine.cpp
     src/scenes/SceneManager.cpp
     src/scenes/KillRoomScene.cpp

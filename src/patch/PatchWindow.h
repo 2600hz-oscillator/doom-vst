@@ -8,7 +8,7 @@
 namespace patch
 {
 
-class PatchSettingsStore;
+class VisualizerState;
 
 // Floating "Patch Settings" window. Displays a panel for the active scene.
 // Only the Spectrum scene has real controls today; the others get a
@@ -16,7 +16,7 @@ class PatchSettingsStore;
 class PatchWindow : public juce::DocumentWindow
 {
 public:
-    explicit PatchWindow(PatchSettingsStore& store);
+    explicit PatchWindow(VisualizerState& state);
 
     void closeButtonPressed() override;
 
@@ -26,7 +26,7 @@ public:
     void setActiveScene(int sceneIndex);
 
 private:
-    PatchSettingsStore& store;
+    VisualizerState& state;
 
     std::unique_ptr<SpectrumPatchPanel>    spectrumPanel;
     std::unique_ptr<PlaceholderPatchPanel> killRoomPanel;

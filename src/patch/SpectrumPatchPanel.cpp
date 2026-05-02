@@ -1,5 +1,4 @@
 #include "SpectrumPatchPanel.h"
-#include "PatchSettingsStore.h"
 #include "SpriteCatalog.h"
 
 namespace patch
@@ -61,8 +60,8 @@ namespace
     }
 }
 
-SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
-    : store(s)
+SpectrumPatchPanel::SpectrumPatchPanel(VisualizerState& s)
+    : state(s)
 {
     auto styleHeader = [this](juce::Label& l, const juce::String& text)
     {
@@ -97,7 +96,7 @@ SpectrumPatchPanel::SpectrumPatchPanel(PatchSettingsStore& s)
     vibeCombo.onChange = [this]() { markDirty(); };
     addAndMakeVisible(vibeCombo);
 
-    for (int i = 0; i < kSpectrumNumBands; ++i)
+    for (int i = 0; i < kNumBands; ++i)
     {
         auto& r = rows[static_cast<size_t>(i)];
 
@@ -190,7 +189,7 @@ void SpectrumPatchPanel::resized()
 
     area.removeFromTop(4);
 
-    for (int i = 0; i < kSpectrumNumBands; ++i)
+    for (int i = 0; i < kNumBands; ++i)
     {
         auto& r = rows[static_cast<size_t>(i)];
         auto row = area.removeFromTop(kRowHeight);
@@ -220,23 +219,18 @@ void SpectrumPatchPanel::markDirty()
     revertBtn.setEnabled(true);
 }
 
-SpectrumSettings SpectrumPatchPanel::buildSettingsFromUI() const
+GlobalConfig SpectrumPatchPanel::buildGlobalFromUI() const
 {
-    SpectrumSettings out = store.getSpectrum();  // start from applied as fallback
+    GlobalConfig out = state.getGlobal();  // start from applied as fallback
 
-    int vibeId = vibeCombo.getSelectedId();
-    if (vibeId >= 1 && vibeId <= kNumBackgroundVibes)
-        out.vibe = static_cast<BackgroundVibe>(vibeId - 1);
-
-    for (int i = 0; i < kSpectrumNumBands; ++i)
+    for (int i = 0; i < kNumBands; ++i)
     {
         const auto& r = rows[static_cast<size_t>(i)];
         float lo = r.lowHz.getText().getFloatValue();
         float hi = r.highHz.getText().getFloatValue();
-        // Validate / clamp.
-        if (lo < 1.0f)    lo = 1.0f;
+        if (lo < 1.0f)     lo = 1.0f;
         if (hi > 22050.0f) hi = 22050.0f;
-        if (hi <= lo)     hi = lo + 1.0f;
+        if (hi <= lo)      hi = lo + 1.0f;
         out.bands[static_cast<size_t>(i)].lowHz  = lo;
         out.bands[static_cast<size_t>(i)].highHz = hi;
         out.bands[static_cast<size_t>(i)].gain01 =
@@ -248,22 +242,31 @@ SpectrumSettings SpectrumPatchPanel::buildSettingsFromUI() const
     return out;
 }
 
-void SpectrumPatchPanel::writeSettingsToUI(const SpectrumSettings& s)
+SpectrumConfig SpectrumPatchPanel::buildSpectrumFromUI() const
+{
+    SpectrumConfig out = state.getSpectrum();
+    int vibeId = vibeCombo.getSelectedId();
+    if (vibeId >= 1 && vibeId <= kNumBackgroundVibes)
+        out.vibe = static_cast<BackgroundVibe>(vibeId - 1);
+    return out;
+}
+
+void SpectrumPatchPanel::writeStateToUI(const GlobalConfig& g, const SpectrumConfig& s)
 {
     vibeCombo.setSelectedId(static_cast<int>(s.vibe) + 1, juce::dontSendNotification);
 
-    for (int i = 0; i < kSpectrumNumBands; ++i)
+    for (int i = 0; i < kNumBands; ++i)
     {
         auto& r = rows[static_cast<size_t>(i)];
         // dontSendNotification so onTextChange / onValueChange don't fire and
         // re-set the dirty flag while we're loading.
-        r.lowHz.setText(juce::String(s.bands[static_cast<size_t>(i)].lowHz, 1),
+        r.lowHz.setText(juce::String(g.bands[static_cast<size_t>(i)].lowHz, 1),
                         juce::dontSendNotification);
-        r.highHz.setText(juce::String(s.bands[static_cast<size_t>(i)].highHz, 1),
+        r.highHz.setText(juce::String(g.bands[static_cast<size_t>(i)].highHz, 1),
                          juce::dontSendNotification);
-        r.gain.setValue(static_cast<double>(s.bands[static_cast<size_t>(i)].gain01),
+        r.gain.setValue(static_cast<double>(g.bands[static_cast<size_t>(i)].gain01),
                         juce::dontSendNotification);
-        int comboId = spriteIdToComboItemId(s.bands[static_cast<size_t>(i)].spriteId);
+        int comboId = spriteIdToComboItemId(g.bands[static_cast<size_t>(i)].spriteId);
         if (comboId > 0)
             r.sprite.setSelectedId(comboId, juce::dontSendNotification);
     }
@@ -271,7 +274,7 @@ void SpectrumPatchPanel::writeSettingsToUI(const SpectrumSettings& s)
 
 void SpectrumPatchPanel::loadFromStore()
 {
-    writeSettingsToUI(store.getSpectrum());
+    writeStateToUI(state.getGlobal(), state.getSpectrum());
     dirty = false;
     applyBtn.setEnabled(false);
     revertBtn.setEnabled(false);
@@ -279,11 +282,13 @@ void SpectrumPatchPanel::loadFromStore()
 
 void SpectrumPatchPanel::applyChanges()
 {
-    SpectrumSettings s = buildSettingsFromUI();
-    store.setSpectrum(s);
+    GlobalConfig   g = buildGlobalFromUI();
+    SpectrumConfig s = buildSpectrumFromUI();
+    state.setGlobal(g);
+    state.setSpectrum(s);
     // Reflect any clamping back into the textboxes so the UI matches what
     // the renderer actually got.
-    writeSettingsToUI(s);
+    writeStateToUI(g, s);
     dirty = false;
     applyBtn.setEnabled(false);
     revertBtn.setEnabled(false);

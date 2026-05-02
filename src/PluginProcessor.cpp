@@ -78,7 +78,7 @@ juce::AudioProcessorEditor* DoomVizProcessor::createEditor()
 
 void DoomVizProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    juce::String xml = patchSettings.toXmlString();
+    juce::String xml = visualizerState.toXmlString();
     destData.replaceAll(xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 }
 
@@ -86,7 +86,7 @@ void DoomVizProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     if (data == nullptr || sizeInBytes <= 0) return;
     juce::String xml = juce::String::fromUTF8(static_cast<const char*>(data), sizeInBytes);
-    patchSettings.fromXmlString(xml);
+    visualizerState.fromXmlString(xml);
 }
 
 #ifndef DOOMVIZ_TEST_BUILD

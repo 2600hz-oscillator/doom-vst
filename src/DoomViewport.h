@@ -8,7 +8,7 @@
 #include "routing/SignalRouter.h"
 #include "routing/RouteConfig.h"
 #include "scenes/SceneManager.h"
-#include "patch/PatchSettingsStore.h"
+#include "patch/VisualizerState.h"
 #include <functional>
 #include <memory>
 
@@ -17,7 +17,7 @@ class DoomViewport : public juce::Component,
 {
 public:
     DoomViewport(SignalBus& signalBus, double sampleRate,
-                 const patch::PatchSettingsStore& patchStore,
+                 const patch::VisualizerState& vizState,
                  std::atomic<int>* sceneOverride = nullptr,
                  std::atomic<int>* currentSceneIndex = nullptr);
     ~DoomViewport() override;
@@ -45,7 +45,7 @@ private:
     std::unique_ptr<DoomEngine> engine;
     AudioAnalyzer analyzer;
     SignalBus& signalBus;
-    const patch::PatchSettingsStore& patchStore;
+    const patch::VisualizerState& vizState;
     SignalRouter router;
     SceneManager sceneManager;
 

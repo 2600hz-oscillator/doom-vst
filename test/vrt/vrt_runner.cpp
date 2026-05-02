@@ -17,7 +17,7 @@
 #include "audio/AudioAnalyzer.h"
 #include "audio/SignalBus.h"
 #include "doom/DoomEngine.h"
-#include "patch/PatchSettingsStore.h"
+#include "patch/VisualizerState.h"
 #include "routing/RouteConfig.h"
 #include "routing/SignalRouter.h"
 #include "scenes/AnalyzerRoomScene.h"
@@ -57,11 +57,11 @@ namespace
     std::unique_ptr<Scene> makeScene(const std::string& name,
                                      const AudioAnalyzer& analyzer,
                                      const SignalBus& bus,
-                                     const patch::PatchSettingsStore& patchStore)
+                                     const patch::VisualizerState& vizState)
     {
         if (name == "killroom")  return std::make_unique<KillRoomScene>();
         if (name == "analyzer")  return std::make_unique<AnalyzerRoomScene>(analyzer, bus);
-        if (name == "spectrum2") return std::make_unique<Spectrum2Scene>(analyzer, patchStore);
+        if (name == "spectrum2") return std::make_unique<Spectrum2Scene>(analyzer, vizState);
         std::fprintf(stderr, "Unknown scene '%s'. Use killroom | analyzer | spectrum2.\n",
                      name.c_str());
         std::exit(2);
@@ -128,10 +128,10 @@ int main(int argc, char** argv)
             router.loadConfig(cfg.getConfig());
     }
 
-    patch::PatchSettingsStore patchStore;
+    patch::VisualizerState vizState;
 
     // --- Scene ---
-    auto scene = makeScene(sceneName, analyzer, bus, patchStore);
+    auto scene = makeScene(sceneName, analyzer, bus, vizState);
     scene->init(engine);
 
     // --- Run blocks, snapshot every Nth ---

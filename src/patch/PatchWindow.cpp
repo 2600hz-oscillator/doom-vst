@@ -1,20 +1,20 @@
 #include "PatchWindow.h"
-#include "PatchSettingsStore.h"
+#include "VisualizerState.h"
 
 namespace patch
 {
 
-PatchWindow::PatchWindow(PatchSettingsStore& s)
+PatchWindow::PatchWindow(VisualizerState& s)
     : DocumentWindow("Patch Settings",
                      juce::Colour(0xff1a1a1a),
                      DocumentWindow::closeButton | DocumentWindow::minimiseButton),
-      store(s)
+      state(s)
 {
     setUsingNativeTitleBar(true);
     setResizable(false, false);
     setAlwaysOnTop(true);
 
-    spectrumPanel = std::make_unique<SpectrumPatchPanel>(store);
+    spectrumPanel = std::make_unique<SpectrumPatchPanel>(state);
     killRoomPanel = std::make_unique<PlaceholderPatchPanel>("Kill Room");
     analyzerPanel = std::make_unique<PlaceholderPatchPanel>("Analyzer Room");
 

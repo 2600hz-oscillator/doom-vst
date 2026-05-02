@@ -1,23 +1,24 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "PatchSettings.h"
+#include "VisualizerState.h"
 #include <array>
 #include <functional>
 
 namespace patch
 {
 
-class PatchSettingsStore;
-
 // Editable patch panel for the Spectrum scene. Each band has a low-Hz
 // textbox, a high-Hz textbox, and a 0..1 slider that attenuates how strongly
 // that band's audio level scales the sprite. Changes only take effect after
 // the user clicks Apply.
+//
+// Band rows write to GlobalConfig (shared across scenes); the vibe combo
+// writes to SpectrumConfig.
 class SpectrumPatchPanel : public juce::Component
 {
 public:
-    explicit SpectrumPatchPanel(PatchSettingsStore& store);
+    explicit SpectrumPatchPanel(VisualizerState& state);
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -39,8 +40,8 @@ private:
         juce::ComboBox sprite;
     };
 
-    PatchSettingsStore& store;
-    std::array<BandRow, kSpectrumNumBands> rows;
+    VisualizerState& state;
+    std::array<BandRow, kNumBands> rows;
 
     juce::Label headerBand, headerLow, headerHigh, headerGain, headerSprite;
 
@@ -54,8 +55,9 @@ private:
     void markDirty();
     void applyChanges();
 
-    SpectrumSettings buildSettingsFromUI() const;
-    void writeSettingsToUI(const SpectrumSettings& s);
+    GlobalConfig   buildGlobalFromUI() const;
+    SpectrumConfig buildSpectrumFromUI() const;
+    void writeStateToUI(const GlobalConfig& g, const SpectrumConfig& s);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SpectrumPatchPanel)
 };
