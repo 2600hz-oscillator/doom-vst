@@ -63,6 +63,12 @@ jobs:
     needs: build
     runs-on: macos-14
     timeout-minutes: 60
+    # Required for softprops/action-gh-release to create the Release. The
+    # default GITHUB_TOKEN is read-only for `contents`, which means it can
+    # check out the repo but cannot publish a release; without this, the
+    # final step gets 403 "Resource not accessible by integration".
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
