@@ -7,7 +7,11 @@ build/
 *.ppm
 *.png
 !/test/baselines/*.ppm
+!/test/vrt/baselines/**/*.ppm
 !/docs/images/*.png
+
+# VRT run output (regenerated each run; baselines live under test/vrt/baselines/)
+/test/vrt/output/
 
 # Reference source (not part of build)
 resources/DOOM/
