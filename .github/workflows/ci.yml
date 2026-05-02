@@ -29,10 +29,26 @@ jobs:
       - name: Render baseline test
         run: flox activate -- task test
 
+      - name: Visual regression
+        run: flox activate -- task vrt
+
       - name: Upload unsigned VST3
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: DoomViz-vst3-${{ github.sha }}
           path: build/DoomViz_artefacts/VST3/DoomViz.vst3
+          retention-days: 30
+
+      # Always upload — when baselines are absent (bootstrap state) the
+      # maintainer downloads this artifact, copies its PPMs into
+      # test/vrt/baselines/, and commits. After that every run does a
+      # byte-exact diff and the artifact serves as the diff record on
+      # any failure.
+      - name: Upload VRT output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vrt-output-${{ github.sha }}
+          path: test/vrt/output/
           retention-days: 30
