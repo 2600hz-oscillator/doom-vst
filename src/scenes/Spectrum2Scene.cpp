@@ -39,11 +39,26 @@ inline float Spectrum2Scene::fastSin(float x) const
 
 void Spectrum2Scene::init(DoomEngine& engine)
 {
+    // Full reset so revisits via SceneManager::switchTo don't leak prior state
+    // (starfield positions, winamp peak meters, doomtex index, etc).
     bandAmplitudes.fill(0.0f);
+    bandGains01.fill(0.0f);
+    bandSpriteIds.fill(0);
     overallRMS = 0.0f;
     onsetTrigger = false;
     time = 0.0f;
     paletteShift = 0.0f;
+
+    doomtexIndex = 0;
+    doomtexAboveThreshold = false;
+    doomtexCachedIndex = -1;
+    doomtexPixels.clear();
+
+    starsInitialized = false;
+    winampPeak.fill(0.0f);
+
+    currentVibe = patch::BackgroundVibe::AcidwarpExe;
+
     loadPalette(engine);
 }
 

@@ -18,7 +18,8 @@ class DoomViewport : public juce::Component,
 public:
     DoomViewport(SignalBus& signalBus, double sampleRate,
                  const patch::PatchSettingsStore& patchStore,
-                 std::atomic<int>* sceneOverride = nullptr);
+                 std::atomic<int>* sceneOverride = nullptr,
+                 std::atomic<int>* currentSceneIndex = nullptr);
     ~DoomViewport() override;
 
     void setSampleRate(double sr);
@@ -60,6 +61,7 @@ private:
     int lastProgramChange = -1;
     int lastSceneOverride = -1;
     std::atomic<int>* sceneOverridePtr = nullptr;
+    std::atomic<int>* currentSceneIndexPtr = nullptr;
 
     juce::String findWadPath() const;
     juce::String findConfigPath(const juce::String& bundleRoot) const;

@@ -42,6 +42,13 @@ public:
     // Scene override from control window (-1 = no override, use MIDI PC)
     std::atomic<int> sceneOverride { -1 };
 
+    // The scene the renderer is currently displaying. DoomViewport sets this
+    // after every switch (whether driven by sceneOverride or by MIDI Program
+    // Change). The editor polls it and pushes scene-aware UI changes (e.g.
+    // showing the right Patch panel). This is the single source of truth so
+    // MIDI-triggered switches stay in sync with the GUI.
+    std::atomic<int> currentSceneIndex { 0 };
+
     // Per-scene editable patch settings (GUI-thread writes via the patch
     // window's Apply button; render thread reads via snapshot copy).
     patch::PatchSettingsStore& getPatchSettings() { return patchSettings; }

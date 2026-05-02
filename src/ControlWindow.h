@@ -27,6 +27,11 @@ public:
     // will land on (driven by the editor polling its own screen bounds).
     void setDisplayName(const juce::String& name);
 
+    // Programmatically select a scene without firing onSceneChange. Used by
+    // the editor to keep button highlighting in sync when MIDI Program Change
+    // (or any other non-GUI source) drives the scene switch.
+    void setActiveScene(int sceneIndex);
+
     // Callback when the user clicks the "Patch Settings" toggle. The editor
     // owns the patch window and decides what to show.
     std::function<void()> onTogglePatchSettings;
