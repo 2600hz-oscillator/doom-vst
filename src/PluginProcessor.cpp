@@ -1,5 +1,7 @@
 #include "PluginProcessor.h"
+#ifndef DOOMVIZ_TEST_BUILD
 #include "PluginEditor.h"
+#endif
 
 DoomVizProcessor::DoomVizProcessor()
     : AudioProcessor(BusesProperties()
@@ -67,10 +69,12 @@ void DoomVizProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     // Audio passes through unchanged
 }
 
+#ifndef DOOMVIZ_TEST_BUILD
 juce::AudioProcessorEditor* DoomVizProcessor::createEditor()
 {
     return new DoomVizEditor(*this);
 }
+#endif
 
 void DoomVizProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
@@ -85,7 +89,9 @@ void DoomVizProcessor::setStateInformation(const void* data, int sizeInBytes)
     patchSettings.fromXmlString(xml);
 }
 
+#ifndef DOOMVIZ_TEST_BUILD
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new DoomVizProcessor();
 }
+#endif

@@ -162,3 +162,46 @@ target_link_libraries(doomviz_unit_tests PRIVATE
 catch_discover_tests(doomviz_unit_tests
     PROPERTIES LABELS "unit"
 )
+
+# --- Integration tests (Catch2 + real DoomVizProcessor, no editor / OpenGL) ---
+juce_add_console_app(doomviz_integration_tests
+    PRODUCT_NAME "DoomViz Integration Tests"
+)
+
+target_sources(doomviz_integration_tests PRIVATE
+    test/integration/test_processor_pass_through.cpp
+    test/integration/test_processor_midi.cpp
+    test/integration/test_processor_state.cpp
+    test/integration/processor_test_stub.cpp
+    src/PluginProcessor.cpp
+    src/audio/SignalBus.cpp
+    src/audio/MidiHandler.cpp
+    src/patch/PatchSettingsStore.cpp
+)
+
+target_include_directories(doomviz_integration_tests PRIVATE
+    src
+    extern/yaml-cpp/include
+)
+
+target_compile_definitions(doomviz_integration_tests PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+    DOOMVIZ_TEST_BUILD=1
+)
+
+target_link_libraries(doomviz_integration_tests PRIVATE
+    juce::juce_core
+    juce::juce_audio_basics
+    juce::juce_audio_processors
+    juce::juce_data_structures
+    juce::juce_dsp
+    juce::juce_events
+    Catch2::Catch2WithMain
+    yaml-cpp
+)
+
+catch_discover_tests(doomviz_integration_tests
+    PROPERTIES LABELS "integration"
+)
