@@ -139,10 +139,10 @@ tasks:
       - echo "Notarized + stapled {{.DIST_DIR}}/{{.VST3_NAME}}"
 
   test:
-    desc: Build + run all tests (unit + render baseline)
+    desc: Build + run all tests (unit + integration + render baseline)
     deps: [configure]
     cmds:
-      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target render_test doomviz_unit_tests
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target render_test doomviz_unit_tests doomviz_integration_tests
       - cd {{.BUILD_DIR}} && ctest --output-on-failure
 
   test-unit:
@@ -151,6 +151,13 @@ tasks:
     cmds:
       - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_unit_tests
       - cd {{.BUILD_DIR}} && ctest -L unit --output-on-failure
+
+  test-integration:
+    desc: Build + run only the integration tests (real DoomVizProcessor + render baseline)
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_integration_tests render_test
+      - cd {{.BUILD_DIR}} && ctest -L integration --output-on-failure
 
   clean:
     desc: Remove build artifacts (keeps dist/)
