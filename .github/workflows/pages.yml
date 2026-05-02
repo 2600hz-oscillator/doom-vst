@@ -28,6 +28,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow (for PPM → PNG conversion)
+        run: pip install --no-cache-dir pillow
+
+      - name: Build VRT baseline gallery
+        run: |
+          python3 test/vrt/build_gallery.py \
+            --baseline-dir test/vrt/baselines \
+            --output-dir docs/vrt
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

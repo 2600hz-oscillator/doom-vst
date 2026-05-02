@@ -36,6 +36,7 @@ webkitgtk.pkg-path = "webkitgtk_4_1"
 webkitgtk.systems = ["aarch64-linux", "x86_64-linux"]
 gh.pkg-path = "gh"
 ffmpeg.pkg-path = "ffmpeg"
+pillow.pkg-path = "python312Packages.pillow"
 
 
 ## Environment Variables ---------------------------------------------
