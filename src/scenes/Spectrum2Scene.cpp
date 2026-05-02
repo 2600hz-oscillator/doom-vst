@@ -38,25 +38,28 @@ inline float Spectrum2Scene::fastSin(float x) const
 
 void Spectrum2Scene::init(DoomEngine& engine)
 {
-    // Full reset so revisits via SceneManager::switchTo don't leak prior state
-    // (starfield positions, winamp peak meters, doomtex index, etc).
+    // Reset *transient/animation* state only. Configuration (vibe, doomtex
+    // index, band gains/sprites, auto-advance settings) lives in
+    // VisualizerState and is refreshed in update() each frame, so we leave
+    // it alone — clobbering it would briefly flash the wrong visualization
+    // on every scene revisit until the next update() runs.
+    //
+    // Forcing lastSeenStoredDoomtexIndex to -1 makes the next update()
+    // treat the stored config as a fresh manual-override, which re-syncs
+    // doomtexIndex from state.
     bandAmplitudes.fill(0.0f);
-    bandGains01.fill(0.0f);
-    bandSpriteIds.fill(0);
     overallRMS = 0.0f;
     onsetTrigger = false;
     time = 0.0f;
     paletteShift = 0.0f;
 
-    doomtexIndex = 0;
     doomtexAboveThreshold = false;
     doomtexCachedIndex = -1;
     doomtexPixels.clear();
+    lastSeenStoredDoomtexIndex = -1;
 
     starsInitialized = false;
     winampPeak.fill(0.0f);
-
-    currentVibe = patch::BackgroundVibe::AcidwarpExe;
 
     loadPalette(engine);
 }
