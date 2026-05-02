@@ -140,19 +140,32 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     overallRMS = analyzer.getRMSLevel();
     onsetTrigger = analyzer.getOnset();
 
-    // DOOMTEX: advance texture index when band 3 (UI-labeled) crosses 50%.
-    // Hysteresis via a held "above" flag so we only advance on rising edge.
-    if (currentVibe == patch::BackgroundVibe::Doomtex)
+    // DOOMTEX manual override: when the user picks a new texture in the
+    // dropdown and clicks Apply, the stored doomtexIndex changes — snap the
+    // live index to it. Tracking the last-seen value avoids treating our own
+    // auto-advance as an external override.
+    if (spec.doomtexIndex != lastSeenStoredDoomtexIndex)
     {
-        float band3 = bandAmplitudes[2];
-        const float kHi = 0.5f;
-        const float kLo = 0.4f;
-        if (! doomtexAboveThreshold && band3 > kHi)
+        lastSeenStoredDoomtexIndex = spec.doomtexIndex;
+        doomtexIndex = juce::jlimit(0, 7, spec.doomtexIndex);
+        doomtexAboveThreshold = false;  // reset edge detector
+    }
+
+    // DOOMTEX auto-advance: cycle to the next texture each time the user-
+    // configured band crosses the threshold (rising edge with hysteresis
+    // computed as `threshold - 0.1` to match the previous kHi/kLo spread).
+    if (currentVibe == patch::BackgroundVibe::Doomtex && spec.doomtexAutoAdvance)
+    {
+        int bandIdx = juce::jlimit(0, kNumDisplayBands - 1, spec.doomtexAutoBand - 1);
+        float bandAmp = bandAmplitudes[static_cast<size_t>(bandIdx)];
+        float kHi = juce::jlimit(0.0f, 1.0f, spec.doomtexAutoThreshold);
+        float kLo = std::max(0.0f, kHi - 0.1f);
+        if (! doomtexAboveThreshold && bandAmp > kHi)
         {
             doomtexAboveThreshold = true;
             doomtexIndex = (doomtexIndex + 1) % 8;  // matches kDoomtexNames len
         }
-        else if (doomtexAboveThreshold && band3 < kLo)
+        else if (doomtexAboveThreshold && bandAmp < kLo)
         {
             doomtexAboveThreshold = false;
         }

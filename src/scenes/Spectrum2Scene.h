@@ -54,8 +54,13 @@ private:
     std::array<float, kSinTableSize> sinTable {};
 
     // --- DOOMTEX state ---
-    // Index into kDoomtexNames (advances when band 3 envelope crosses 50%).
+    // Live texture index (auto-advance increments this internally;
+    // doomtexIndex from SpectrumConfig is the manual selection — the scene
+    // snaps to it whenever the user changes the dropdown). Tracking the
+    // last-seen stored value lets us detect that override without writing
+    // back from the render thread.
     int doomtexIndex = 0;
+    int lastSeenStoredDoomtexIndex = -1;
     bool doomtexAboveThreshold = false;
     // Cached pixel data for the current texture (column-major indexed bytes).
     std::vector<uint8_t> doomtexPixels;

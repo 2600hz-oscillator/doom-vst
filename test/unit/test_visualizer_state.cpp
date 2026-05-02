@@ -41,7 +41,7 @@ TEST_CASE("VisualizerState: setGlobal/setSpectrum round-trip",
     REQUIRE(sr.vibe == patch::BackgroundVibe::Doomtex);
 }
 
-TEST_CASE("VisualizerState: XML round-trip preserves global bands and spectrum vibe",
+TEST_CASE("VisualizerState: XML round-trip preserves global bands and spectrum config",
           "[viz_state]")
 {
     patch::VisualizerState a;
@@ -53,7 +53,11 @@ TEST_CASE("VisualizerState: XML round-trip preserves global bands and spectrum v
     a.setGlobal(g);
 
     auto s = patch::SpectrumConfig::makeDefault();
-    s.vibe = patch::BackgroundVibe::Winamp;
+    s.vibe                  = patch::BackgroundVibe::Winamp;
+    s.doomtexIndex          = 5;
+    s.doomtexAutoAdvance    = false;
+    s.doomtexAutoBand       = 7;
+    s.doomtexAutoThreshold  = 0.73f;
     a.setSpectrum(s);
 
     juce::String xml = a.toXmlString();
@@ -68,7 +72,21 @@ TEST_CASE("VisualizerState: XML round-trip preserves global bands and spectrum v
     REQUIRE(gr.bands[2].highHz   == 567.0f);
     REQUIRE(gr.bands[2].gain01   == 0.42f);
     REQUIRE(gr.bands[2].spriteId == 92);
-    REQUIRE(sr.vibe == patch::BackgroundVibe::Winamp);
+    REQUIRE(sr.vibe                 == patch::BackgroundVibe::Winamp);
+    REQUIRE(sr.doomtexIndex         == 5);
+    REQUIRE(sr.doomtexAutoAdvance   == false);
+    REQUIRE(sr.doomtexAutoBand      == 7);
+    REQUIRE(sr.doomtexAutoThreshold == 0.73f);
+}
+
+TEST_CASE("VisualizerState: SpectrumConfig defaults match the prior hard-coded behavior",
+          "[viz_state]")
+{
+    auto s = patch::SpectrumConfig::makeDefault();
+    REQUIRE(s.doomtexAutoAdvance   == true);
+    REQUIRE(s.doomtexAutoBand      == 3);
+    REQUIRE(s.doomtexAutoThreshold == 0.5f);
+    REQUIRE(s.doomtexIndex         == 0);
 }
 
 TEST_CASE("VisualizerState: legacy DoomVizPatches XML still loads",
