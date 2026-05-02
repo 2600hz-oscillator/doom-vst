@@ -81,6 +81,19 @@ routes:
     scale: 1.0
 ```
 
+## Install (macOS, no build)
+
+A prebuilt macOS VST3 is committed under `dist/DoomViz.vst3` (binary tracked via git-lfs). It's
+signed with my Apple Developer ID and notarized + stapled by Apple, so it loads in any DAW
+without Gatekeeper warnings or `xattr -cr` workarounds. To install, copy the bundle into your
+user plugin folder:
+
+```bash
+cp -R dist/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/
+```
+
+Then rescan plugins in your DAW. The committed binary is arm64 (Apple Silicon).
+
 ## Building
 
 All builds run inside [Flox](https://flox.dev/), which manages cmake / ninja / git-lfs / python deps.

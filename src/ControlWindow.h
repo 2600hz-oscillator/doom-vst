@@ -23,6 +23,10 @@ public:
     // via a different path (e.g. double-clicking the viewport).
     void setFullscreenState(bool fullscreen);
 
+    // Update the small footer label that previews which display Fullscreen
+    // will land on (driven by the editor polling its own screen bounds).
+    void setDisplayName(const juce::String& name);
+
     // Callback when the user clicks the "Patch Settings" toggle. The editor
     // owns the patch window and decides what to show.
     std::function<void()> onTogglePatchSettings;
@@ -35,6 +39,7 @@ private:
     juce::TextButton patchBtn { "Patch Settings" };
     juce::Label sceneLabel { {}, "Scene:" };
     juce::Label activeLabel { {}, "Kill Room" };
+    juce::Label displayLabel { {}, "Display: -" };
 
     bool isFullscreen = false;
 

@@ -47,7 +47,12 @@ ControlPanel::ControlPanel()
     };
     addAndMakeVisible(patchBtn);
 
-    setSize(340, 220);
+    displayLabel.setColour(juce::Label::textColourId, juce::Colour(0xff888888));
+    displayLabel.setFont(juce::FontOptions(11.0f));
+    displayLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(displayLabel);
+
+    setSize(340, 244);
 }
 
 void ControlPanel::resized()
@@ -72,6 +77,8 @@ void ControlPanel::resized()
     fullscreenBtn.setBounds(area.removeFromTop(36));
     area.removeFromTop(10);
     patchBtn.setBounds(area.removeFromTop(36));
+    area.removeFromTop(8);
+    displayLabel.setBounds(area.removeFromTop(16));
 }
 
 void ControlPanel::selectScene(int index)
@@ -115,6 +122,11 @@ void ControlPanel::setFullscreenState(bool fullscreen)
         return;
     isFullscreen = fullscreen;
     fullscreenBtn.setButtonText(isFullscreen ? "Exit Fullscreen" : "Fullscreen");
+}
+
+void ControlPanel::setDisplayName(const juce::String& name)
+{
+    displayLabel.setText("Display: " + name, juce::dontSendNotification);
 }
 
 // --- ControlWindow ---

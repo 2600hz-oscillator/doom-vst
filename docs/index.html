@@ -225,6 +225,14 @@ routes:
             <li><code>doom_set_god_mode</code> / <code>doom_respawn_player</code></li>
         </ul>
 
+        <h2>Install (macOS, no build)</h2>
+        <p>A prebuilt macOS VST3 is committed under <code>dist/DoomViz.vst3</code> (binary tracked via
+        git-lfs). It is signed with an Apple Developer ID and notarized + stapled by Apple, so it
+        loads in any DAW without Gatekeeper warnings or <code>xattr -cr</code> workarounds. To install,
+        copy the bundle into your user plugin folder:</p>
+<pre>cp -R dist/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/</pre>
+        <p>Then rescan plugins in your DAW. The committed binary is arm64 (Apple Silicon).</p>
+
         <h2>Building</h2>
         <p>All builds run inside <a href="https://flox.dev/">Flox</a>, which manages cmake / ninja /
         git-lfs / python deps. The only host requirement is the platform compiler:</p>

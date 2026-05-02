@@ -6,7 +6,8 @@
 #include "patch/PatchWindow.h"
 #include <memory>
 
-class DoomVizEditor : public juce::AudioProcessorEditor
+class DoomVizEditor : public juce::AudioProcessorEditor,
+                      private juce::Timer
 {
 public:
     explicit DoomVizEditor(DoomVizProcessor&);
@@ -24,6 +25,13 @@ private:
     void enterFullscreen();
     void exitFullscreen();
     void togglePatchWindow();
+
+    // Polls the editor's screen bounds and pushes the name of the display
+    // that fullscreen would target to the control panel, so the user can
+    // see where Fullscreen will land before clicking it.
+    void timerCallback() override;
+    juce::String describeTargetDisplay() const;
+    juce::String lastDisplayName;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomVizEditor)
 };
