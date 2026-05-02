@@ -1,6 +1,6 @@
 [submodule "extern/JUCE"]
 	path = extern/JUCE
 	url = https://github.com/juce-framework/JUCE.git
-[submodule "/Users/2600hz/Documents/workspace/doom_viz/extern/yaml-cpp"]
-	path = /Users/2600hz/Documents/workspace/doom_viz/extern/yaml-cpp
+[submodule "extern/yaml-cpp"]
+	path = extern/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
