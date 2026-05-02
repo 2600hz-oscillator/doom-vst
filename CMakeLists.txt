@@ -15,6 +15,13 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/yaml-cpp)
 
+# Catch2 v3 — only its own headers/lib, no install/CTest scaffolding.
+set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+set(CATCH_INSTALL_EXTRAS OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/Catch2)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/extern/Catch2/extras)
+include(Catch)
+
 juce_add_plugin(DoomViz
     COMPANY_NAME "DoomViz"
     IS_SYNTH FALSE
@@ -101,4 +108,57 @@ add_test(
     NAME render_baseline
     COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+set_tests_properties(render_baseline PROPERTIES LABELS "integration")
+
+# --- Unit tests (Catch2) ---
+# Console app rather than plain add_executable: JUCE's CMake expects the
+# juce_add_* macros to wire up its module compile flags. We compile the
+# testable subset of plugin sources directly into the test binary instead
+# of linking against DoomViz_SharedCode (which pulls in the full plugin
+# client wrappers and editor).
+juce_add_console_app(doomviz_unit_tests
+    PRODUCT_NAME "DoomViz Unit Tests"
+)
+
+target_sources(doomviz_unit_tests PRIVATE
+    test/unit/test_signal_bus.cpp
+    test/unit/test_audio_analyzer.cpp
+    test/unit/test_midi_handler.cpp
+    test/unit/test_route_config.cpp
+    test/unit/test_signal_router.cpp
+    test/unit/test_patch_settings_store.cpp
+    test/unit/test_sprite_catalog.cpp
+    src/audio/SignalBus.cpp
+    src/audio/AudioAnalyzer.cpp
+    src/audio/MidiHandler.cpp
+    src/routing/RouteConfig.cpp
+    src/routing/SignalRouter.cpp
+    src/patch/PatchSettingsStore.cpp
+)
+
+target_include_directories(doomviz_unit_tests PRIVATE
+    src
+    extern/yaml-cpp/include
+)
+
+target_compile_definitions(doomviz_unit_tests PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+)
+
+target_link_libraries(doomviz_unit_tests PRIVATE
+    juce::juce_core
+    juce::juce_audio_basics
+    juce::juce_audio_processors
+    juce::juce_data_structures
+    juce::juce_dsp
+    juce::juce_events
+    Catch2::Catch2WithMain
+    yaml-cpp
+)
+
+catch_discover_tests(doomviz_unit_tests
+    PROPERTIES LABELS "unit"
 )

@@ -139,11 +139,18 @@ tasks:
       - echo "Notarized + stapled {{.DIST_DIR}}/{{.VST3_NAME}}"
 
   test:
-    desc: Run the render baseline test
+    desc: Build + run all tests (unit + render baseline)
     deps: [configure]
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target render_test
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target render_test doomviz_unit_tests
       - cd {{.BUILD_DIR}} && ctest --output-on-failure
+
+  test-unit:
+    desc: Build + run only the Catch2 unit tests
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target doomviz_unit_tests
+      - cd {{.BUILD_DIR}} && ctest -L unit --output-on-failure
 
   clean:
     desc: Remove build artifacts (keeps dist/)
