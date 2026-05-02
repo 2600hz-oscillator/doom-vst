@@ -120,6 +120,27 @@ tasks:
       - codesign --force --deep --options runtime --timestamp --sign "{{.SIGNING_IDENTITY}}" ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}
       - echo "Installed to ~/Library/Audio/Plug-Ins/VST3/{{.VST3_NAME}}"
 
+  notarize-mac-ci:
+    desc: Sign + notarize + staple via App Store Connect API key (CI release path).
+    deps: [build-mac]
+    preconditions:
+      - sh: "[ \"$(uname)\" = \"Darwin\" ]"
+        msg: "notarize-mac-ci only runs on macOS"
+      - sh: '[ -n "${AC_API_KEY_ID}" ]'
+        msg: "AC_API_KEY_ID env var not set"
+      - sh: '[ -n "${AC_API_ISSUER_ID}" ]'
+        msg: "AC_API_ISSUER_ID env var not set"
+      - sh: 'test -f /tmp/key.p8'
+        msg: "/tmp/key.p8 not present (decode AC_API_KEY_P8_BASE64 secret into it before running)"
+    cmds:
+      - rm -f /tmp/DoomViz_notarize.zip
+      - ditto -c -k --keepParent {{.DIST_DIR}}/{{.VST3_NAME}} /tmp/DoomViz_notarize.zip
+      - xcrun notarytool submit /tmp/DoomViz_notarize.zip --key /tmp/key.p8 --key-id "${AC_API_KEY_ID}" --issuer "${AC_API_ISSUER_ID}" --wait
+      - xcrun stapler staple {{.DIST_DIR}}/{{.VST3_NAME}}
+      - xcrun stapler validate {{.DIST_DIR}}/{{.VST3_NAME}}
+      - rm -f /tmp/DoomViz_notarize.zip
+      - echo "Notarized + stapled {{.DIST_DIR}}/{{.VST3_NAME}} (CI path)"
+
   notarize-mac:
     desc: Sign + notarize + staple the dist VST3 (release builds)
     deps: [build-mac]
