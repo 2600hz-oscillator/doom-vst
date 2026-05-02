@@ -15,7 +15,6 @@ Spectrum2Scene::Spectrum2Scene(const AudioAnalyzer& az,
       rgbaBuffer(static_cast<size_t>(kWidth * kHeight * 4), 0)
 {
     initSinTable();
-    bandGains01.fill(0.625f);
 }
 
 void Spectrum2Scene::initSinTable()
