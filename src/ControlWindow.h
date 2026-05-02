@@ -1,14 +1,20 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "patch/VisualizerState.h"
+#include "patch/BandRowsSection.h"
+#include "patch/SpectrumSection.h"
+#include "patch/PlaceholderSection.h"
 #include <functional>
+#include <memory>
 
-// Floating control panel in a separate OS window.
-// Can be moved to a different display from the visualizer.
+// Floating control panel in a separate OS window. Hosts the visualizer's
+// global band config + the active scene's per-scene config in a single,
+// stacked layout (no separate "Patch Settings" window).
 class ControlPanel : public juce::Component
 {
 public:
-    ControlPanel();
+    explicit ControlPanel(patch::VisualizerState& state);
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -30,26 +36,41 @@ public:
 
     // Programmatically select a scene without firing onSceneChange. Used by
     // the editor to keep button highlighting in sync when MIDI Program Change
-    // (or any other non-GUI source) drives the scene switch.
+    // (or any other non-GUI source) drives the scene switch. Pending unsaved
+    // edits in the per-scene section are silently reverted.
     void setActiveScene(int sceneIndex);
 
-    // Callback when the user clicks the "Patch Settings" toggle. The editor
-    // owns the patch window and decides what to show.
-    std::function<void()> onTogglePatchSettings;
-
 private:
-    juce::TextButton sceneA { "Kill Room" };
-    juce::TextButton sceneB { "Analyzer" };
-    juce::TextButton sceneC { "Doom Spectrum" };
-    juce::TextButton fullscreenBtn { "Fullscreen" };
-    juce::TextButton patchBtn { "Patch Settings" };
-    juce::Label sceneLabel { {}, "Scene:" };
-    juce::Label activeLabel { {}, "Kill Room" };
-    juce::Label displayLabel { {}, "Display: -" };
+    patch::VisualizerState& state;
 
+    juce::TextButton sceneA { "KILL ROOM" };
+    juce::TextButton sceneB { "ANALYZER" };
+    juce::TextButton sceneC { "DOOM SPECTRUM" };
+    juce::TextButton fullscreenBtn { "FULLSCREEN" };
+    juce::TextButton applyBtn { "APPLY" };
+    juce::TextButton revertBtn { "REVERT" };
+    juce::Label sceneLabel { {}, "SCENE:" };
+    juce::Label activeLabel { {}, "KILL ROOM" };
+    juce::Label displayLabel { {}, "DISPLAY: -" };
+    juce::Label globalHeader { {}, "GLOBAL" };
+    juce::Label sceneHeader  { {}, "KILL ROOM" };
+
+    patch::BandRowsSection bandRows;
+    patch::SpectrumSection spectrumSection;
+    patch::PlaceholderSection killRoomSection { "Kill Room" };
+    patch::PlaceholderSection analyzerSection { "Analyzer" };
+
+    int activeScene = 0;
     bool isFullscreen = false;
+    bool dirty = false;
 
+    juce::Component* activeSection();
     void selectScene(int index);
+    void highlightScene(int index);
+    void markDirty();
+    void applyChanges();
+    void revertChanges();
+    void loadFromState();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ControlPanel)
 };
@@ -58,7 +79,7 @@ private:
 class ControlWindow : public juce::DocumentWindow
 {
 public:
-    ControlWindow();
+    explicit ControlWindow(patch::VisualizerState& state);
 
     void closeButtonPressed() override;
 
