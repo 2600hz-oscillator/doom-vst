@@ -65,14 +65,20 @@ def run_runner(runner: Path, scene: str, wav: Path, out_dir: Path,
 
 
 # Tolerance for "byte-exact-enough" diff. Captured from observation, not
-# a guess: KillRoom's monster-spawn / engine-state path produces 2-11 pixel
-# differences across same-binary same-input runs (uninitialized zone-heap
-# state, most likely). Spectrum2 + Analyzer are bit-identical across runs.
-# Setting the per-frame budget at 50 pixels (~0.08 % of 320×200) is well
-# above the observed noise floor (~33 pixels worst case) and well below
-# what a real visual regression touches (a moved sprite changes hundreds
-# to thousands of pixels).
-MAX_DIFFERING_PIXELS = 50
+# a guess. After a follow-up investigation, the per-frame noise is much
+# smaller than we initially set: same-binary same-input runs produce at
+# most 4 differing pixels per frame, *all on row y=83* — Doom's wall/sky
+# horizon boundary in a 168-tall 3D view (`centery = viewheight/2 = 84`).
+# The pixel at the very top of a wall column is a long-known fragility in
+# linuxdoom's R_DrawColumn / R_FindPlane fixed-point boundary math; it can
+# wobble by 1 row depending on accumulated visplane state across frames.
+# Spectrum2 + Analyzer are bit-identical across runs.
+#
+# Tolerance set to 20 px / frame: above the observed worst case for
+# local-vs-CI compares (frame_0016 was 12 px), tightly below what any
+# real visual regression disturbs (a moved sprite shifts hundreds to
+# thousands of pixels). Down from the initial guess of 50.
+MAX_DIFFERING_PIXELS = 20
 
 
 def diff_ppms(actual: Path, baseline: Path, diff_out: Path) -> tuple[bool, int]:
