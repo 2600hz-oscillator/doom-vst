@@ -127,7 +127,7 @@ target_include_directories(render_test PRIVATE
 enable_testing()
 add_test(
     NAME render_baseline
-    COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 set_tests_properties(render_baseline PROPERTIES LABELS "integration")

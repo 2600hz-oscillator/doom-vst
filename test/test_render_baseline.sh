@@ -6,10 +6,15 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-RENDER_TEST="$PROJECT_DIR/build/render_test"
+# Optional first arg: absolute path to the build dir (where render_test was
+# built). Defaults to "$PROJECT_DIR/build" for backwards-compatible local
+# `task test` runs; CMake passes ${CMAKE_BINARY_DIR} so out-of-tree builds
+# (e.g. build-linux/) work too.
+BUILD_DIR="${1:-$PROJECT_DIR/build}"
+RENDER_TEST="$BUILD_DIR/render_test"
 WAD="$PROJECT_DIR/resources/DOOM1.WAD"
 BASELINES="$SCRIPT_DIR/baselines"
-TMPDIR="$PROJECT_DIR/build/test_output"
+TMPDIR="$BUILD_DIR/test_output"
 
 mkdir -p "$TMPDIR"
 trap "rm -rf $TMPDIR" EXIT
