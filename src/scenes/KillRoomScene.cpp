@@ -64,7 +64,7 @@ void KillRoomScene::init(DoomEngine& engine)
     combatCooldown = 0.0f;
     monsters.clear();
 
-    bandAmplitudes.fill(0.0f);
+    bandEnv.reset();
     bandAboveThreshold.fill(false);
     bandSpawnCooldown.fill(0.0f);
 
@@ -112,57 +112,9 @@ void KillRoomScene::update(DoomEngine& engine, const ParameterMap& params,
 
 void KillRoomScene::updateBands(float deltaTime)
 {
-    // Compute per-band amplitudes from the FFT bins using the user's global
-    // band config. Same approach Spectrum2Scene uses — keeps the three
-    // scenes' spectral analysis consistent.
-    patch::GlobalConfig global = vizState.getGlobal();
-
-    const float* spectrum = analyzer.getMagnitudeSpectrum();
-    const int specSize = analyzer.getSpectrumSize();
-    const double sampleRate = analyzer.getSampleRate();
-    const float binWidth = static_cast<float>(sampleRate) /
-                           static_cast<float>(AudioAnalyzer::kFFTSize);
-
-    std::array<float, kNumBands> rawBand {};
-    for (int i = 0; i < kNumBands; ++i)
-    {
-        const auto& cfg = global.bands[static_cast<size_t>(i)];
-        int lowBin  = std::max(1, static_cast<int>(cfg.lowHz  / binWidth));
-        int highBin = std::min(specSize - 1, static_cast<int>(cfg.highHz / binWidth));
-        if (highBin < lowBin) std::swap(lowBin, highBin);
-
-        float sumSq = 0.0f;
-        int count = 0;
-        for (int bin = lowBin; bin <= highBin; ++bin)
-        {
-            float mag = spectrum[static_cast<size_t>(bin)];
-            sumSq += mag * mag;
-            count++;
-        }
-        rawBand[static_cast<size_t>(i)] =
-            count > 0 ? std::sqrt(sumSq / static_cast<float>(count)) : 0.0f;
-    }
-
-    // Peak-normalize across the 8 bands so the loudest band lands ~1.0.
-    float maxBand = *std::max_element(rawBand.begin(), rawBand.end());
-    if (maxBand > 0.0001f)
-    {
-        for (auto& b : rawBand)
-            b = std::min(1.0f, b / maxBand);
-    }
-
-    // Per-band envelope follower (one-pole, attack/release).
-    constexpr float kAttack  = 0.01f;
-    constexpr float kRelease = 0.15f;
-    float dt = std::max(0.001f, deltaTime);
-    float attackCoeff  = 1.0f - std::exp(-dt / kAttack);
-    float releaseCoeff = 1.0f - std::exp(-dt / kRelease);
-    for (int i = 0; i < kNumBands; ++i)
-    {
-        float target = rawBand[static_cast<size_t>(i)];
-        float& env = bandAmplitudes[static_cast<size_t>(i)];
-        env += (target > env ? attackCoeff : releaseCoeff) * (target - env);
-    }
+    // FFT bins → 8 user-configured band envelopes (shared with Spectrum2 +
+    // AnalyzerRoom).
+    bandEnv.update(analyzer, vizState.getGlobal(), deltaTime);
 
     // Tick down per-band spawn cooldowns.
     for (auto& c : bandSpawnCooldown)
@@ -252,7 +204,7 @@ void KillRoomScene::updateSpawning(DoomEngine& engine, float deltaTime)
 
     for (int b = 0; b < kNumBands; ++b)
     {
-        float amp = bandAmplitudes[static_cast<size_t>(b)];
+        float amp = bandEnv[static_cast<size_t>(b)];
         bool& above = bandAboveThreshold[static_cast<size_t>(b)];
         float& cd = bandSpawnCooldown[static_cast<size_t>(b)];
 

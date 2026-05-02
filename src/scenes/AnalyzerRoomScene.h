@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "audio/BandAnalyzer.h"
 #include "patch/VisualizerState.h"
 #include <vector>
 #include <cstdint>
@@ -36,7 +37,7 @@ private:
     // Per-band envelopes fed by FFT bins inside the user's lowHz/highHz
     // ranges. Same envelope follower Spectrum2/KillRoom use, so all three
     // scenes interpret the audio consistently.
-    std::array<float, kNumBars> bandAmplitudes {};
+    BandAnalyzer bandEnv;
 
     // Camera / navigation
     int32_t camX = 0, camY = 0, camZ = 0;
