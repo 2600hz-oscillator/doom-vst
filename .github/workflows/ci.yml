@@ -19,9 +19,7 @@ jobs:
           lfs: true
 
       - name: Install flox
-        run: |
-          brew install --cask flox
-          flox --version
+        uses: flox/install-flox-action@main
 
       - name: Build VST3 (unsigned)
         run: flox activate -- task build-mac-unsigned
