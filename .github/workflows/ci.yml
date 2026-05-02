@@ -37,9 +37,20 @@ jobs:
           version: "1.11.2"
 
       - name: Build all Linux targets
+        # Force JUCE's CMake to use the system pkg-config and look at the
+        # apt-installed .pc files under /usr/lib/x86_64-linux-gnu/pkgconfig.
+        # Otherwise flox's pkg-config gets picked up and doesn't see
+        # freetype2 / fontconfig / x11 / gtk+-3.0 from apt → JUCE compiles
+        # juceaide with no -I flags for those, and ft2build.h fails.
+        env:
+          PKG_CONFIG: /usr/bin/pkg-config
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         run: flox activate -- task build-linux
 
       - name: Run tests (unit + integration + render_baseline; VRT is macOS-only)
+        env:
+          PKG_CONFIG: /usr/bin/pkg-config
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         run: flox activate -- task test-linux
 
       - name: Upload unsigned VST3 (build artifact)
@@ -199,6 +210,9 @@ jobs:
           version: "1.11.2"
 
       - name: Build Linux VST3
+        env:
+          PKG_CONFIG: /usr/bin/pkg-config
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         run: flox activate -- task build-linux
 
       - name: Package VST3 for release
