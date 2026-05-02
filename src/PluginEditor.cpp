@@ -28,7 +28,7 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
     : AudioProcessorEditor(&p),
       processorRef(p),
       viewport(p.getSignalBus(), p.getCurrentSampleRate(),
-               p.getPatchSettings(), &p.sceneOverride, &p.currentSceneIndex)
+               p.getVisualizerState(), &p.sceneOverride, &p.currentSceneIndex)
 {
     addAndMakeVisible(viewport);
 
@@ -52,7 +52,7 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
 
     // Create the patch settings window (hidden by default; opened via the
     // Patch Settings button on the control panel).
-    patchWindow = std::make_unique<patch::PatchWindow>(p.getPatchSettings());
+    patchWindow = std::make_unique<patch::PatchWindow>(p.getVisualizerState());
 
     controlWindow->getPanel().onSceneChange = [this, &p](int scene)
     {

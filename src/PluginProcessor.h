@@ -3,7 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "audio/SignalBus.h"
 #include "audio/MidiHandler.h"
-#include "patch/PatchSettingsStore.h"
+#include "patch/VisualizerState.h"
 #include <memory>
 
 class DoomVizProcessor : public juce::AudioProcessor
@@ -49,15 +49,16 @@ public:
     // MIDI-triggered switches stay in sync with the GUI.
     std::atomic<int> currentSceneIndex { 0 };
 
-    // Per-scene editable patch settings (GUI-thread writes via the patch
-    // window's Apply button; render thread reads via snapshot copy).
-    patch::PatchSettingsStore& getPatchSettings() { return patchSettings; }
-    const patch::PatchSettingsStore& getPatchSettings() const { return patchSettings; }
+    // Persistent shared state for the visualizer (global band config +
+    // per-scene config). GUI thread writes via the control panel's Apply
+    // button; render thread reads via snapshot copy under SpinLock.
+    patch::VisualizerState& getVisualizerState() { return visualizerState; }
+    const patch::VisualizerState& getVisualizerState() const { return visualizerState; }
 
 private:
     SignalBus signalBus;
     MidiHandler midiHandler;
-    patch::PatchSettingsStore patchSettings;
+    patch::VisualizerState visualizerState;
     std::vector<float> monoBuffer;
     double currentSampleRate = 44100.0;
 

@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Scene.h"
-#include "patch/PatchSettings.h"
+#include "patch/VisualizerState.h"
 #include <vector>
 #include <cstdint>
 #include <array>
 
 class AudioAnalyzer;
-namespace patch { class PatchSettingsStore; }
 
 // Scene D: Spectrum visualizer with acidwarp-style animated background.
 // Background pattern parameters are driven by individual frequency bands.
@@ -17,10 +16,10 @@ class Spectrum2Scene : public Scene
 public:
     static constexpr int kWidth = 320;
     static constexpr int kHeight = 200;
-    static constexpr int kNumDisplayBands = patch::kSpectrumNumBands;
+    static constexpr int kNumDisplayBands = patch::kNumBands;
 
     Spectrum2Scene(const AudioAnalyzer& analyzer,
-                   const patch::PatchSettingsStore& patchStore);
+                   const patch::VisualizerState& vizState);
 
     void init(DoomEngine& engine) override;
     void update(DoomEngine& engine, const ParameterMap& params, float deltaTime) override;
@@ -30,7 +29,7 @@ public:
 
 private:
     const AudioAnalyzer& analyzer;
-    const patch::PatchSettingsStore& patchStore;
+    const patch::VisualizerState& vizState;
     std::vector<uint8_t> rgbaBuffer;
 
     // Per-band amplitudes (post-envelope, post-normalization, in [0,1])

@@ -1,7 +1,6 @@
 #include "Spectrum2Scene.h"
 #include "doom/DoomEngine.h"
 #include "audio/AudioAnalyzer.h"
-#include "patch/PatchSettingsStore.h"
 #include "doom_renderer.h"
 #include <cmath>
 #include <algorithm>
@@ -10,9 +9,9 @@
 static constexpr float TWO_PI = 6.28318530718f;
 
 Spectrum2Scene::Spectrum2Scene(const AudioAnalyzer& az,
-                                const patch::PatchSettingsStore& store)
+                                const patch::VisualizerState& state)
     : analyzer(az),
-      patchStore(store),
+      vizState(state),
       rgbaBuffer(static_cast<size_t>(kWidth * kHeight * 4), 0)
 {
     initSinTable();
@@ -80,9 +79,11 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     (void)engine;
     lastDelta = deltaTime;
 
-    // Pull current patch settings (snapshot copy under SpinLock).
-    patch::SpectrumSettings snap = patchStore.getSpectrum();
-    currentVibe = snap.vibe;
+    // Pull current state snapshots under SpinLock. Bands live in GlobalConfig
+    // (shared across scenes); the active background vibe is per-scene.
+    patch::GlobalConfig   global = vizState.getGlobal();
+    patch::SpectrumConfig spec   = vizState.getSpectrum();
+    currentVibe = spec.vibe;
 
     // Compute per-band amplitudes from the raw FFT magnitude spectrum using
     // the user-configured Hz ranges. Replaces the prior fixed 8-from-16
@@ -95,7 +96,7 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     std::array<float, kNumDisplayBands> rawBand {};
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
-        const auto& cfg = snap.bands[static_cast<size_t>(i)];
+        const auto& cfg = global.bands[static_cast<size_t>(i)];
         bandGains01[static_cast<size_t>(i)] = cfg.gain01;
         bandSpriteIds[static_cast<size_t>(i)] = cfg.spriteId;
 

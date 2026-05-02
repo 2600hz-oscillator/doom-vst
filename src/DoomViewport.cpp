@@ -4,10 +4,10 @@
 #include "scenes/Spectrum2Scene.h"
 
 DoomViewport::DoomViewport(SignalBus& bus, double sampleRate,
-                           const patch::PatchSettingsStore& store,
+                           const patch::VisualizerState& state,
                            std::atomic<int>* sceneOverride,
                            std::atomic<int>* currentSceneIndex)
-    : signalBus(bus), patchStore(store),
+    : signalBus(bus), vizState(state),
       pullBuffer(8192, 0.0f),
       sceneOverridePtr(sceneOverride),
       currentSceneIndexPtr(currentSceneIndex)
@@ -118,7 +118,7 @@ void DoomViewport::newOpenGLContextCreated()
 
         sceneManager.addScene(std::make_unique<KillRoomScene>());
         sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
-        sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer, patchStore));
+        sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer, vizState));
 
         if (engine->isMapLoaded())
             sceneManager.init(*engine);
