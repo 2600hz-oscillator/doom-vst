@@ -1,10 +1,58 @@
 #include "KillRoomScene.h"
 #include "doom/DoomEngine.h"
+#include "audio/AudioAnalyzer.h"
 #include "doom_renderer.h"
+#include "patch/SpriteCatalog.h"
 #include <cmath>
 #include <algorithm>
 
-KillRoomScene::KillRoomScene() = default;
+namespace
+{
+    // Map a sprite ID from the global config to a Doom mobjtype_t value.
+    // Returns -1 for sprites that should not spawn (guns, the player marine).
+    //
+    // mobjtype enum values come from libs/doom_renderer/doom_src/info.h —
+    // they're stable across the Doom 1.10 source we vendored, so hard-coding
+    // is safer than trying to compute them at runtime.
+    int spriteToMobjType(int spriteId)
+    {
+        switch (spriteId)
+        {
+            // Characters (skip PLAY=28 — duplicate marines look incoherent)
+            case  0: return 11;  // TROO → MT_TROOP        (Imp)
+            case 29: return  1;  // POSS → MT_POSSESSED    (Zombieman)
+            case 30: return  2;  // SPOS → MT_SHOTGUY
+            case 39: return 12;  // SARG → MT_SERGEANT     (Demon)
+            case 40: return 14;  // HEAD → MT_HEAD         (Cacodemon)
+            case 42: return 15;  // BOSS → MT_BRUISER      (Baron of Hell)
+            case 44: return 18;  // SKUL → MT_SKULL        (Lost Soul)
+
+            // Powerups
+            case 70: return 55;  // SOUL → MT_MISC12       (Soulsphere)
+            case 71: return 56;  // PINV → MT_INV          (Invulnerability)
+            case 72: return 57;  // PSTR → MT_MISC13       (Berserk)
+            case 73: return 58;  // PINS → MT_INS          (Blursphere)
+            case 75: return 59;  // SUIT → MT_MISC14       (Rad Suit)
+            case 76: return 60;  // PMAP → MT_MISC15       (Computer Map)
+            case 77: return 61;  // PVIS → MT_MISC16       (Light Amp Visor)
+
+            // Armor
+            case 55: return 43;  // ARM1 → MT_MISC0        (Green Armor)
+            case 56: return 44;  // ARM2 → MT_MISC1        (Blue Armor)
+            case 60: return 45;  // BON1 → MT_MISC2        (Health Bonus)
+            case 61: return 46;  // BON2 → MT_MISC3        (Armor Bonus)
+
+            // Guns (88 MGUN, 89 CSAW, 90 LAUN, 92 SHOT) and PLAY (28): skip.
+            default: return -1;
+        }
+    }
+}
+
+KillRoomScene::KillRoomScene(const AudioAnalyzer& az,
+                              const patch::VisualizerState& state)
+    : analyzer(az), vizState(state)
+{
+}
 
 void KillRoomScene::init(DoomEngine& engine)
 {
@@ -13,9 +61,12 @@ void KillRoomScene::init(DoomEngine& engine)
     turnTimer = 0.0f;
     blockedTimer = 0.0f;
     turnDirection = 1.0f;
-    spawnCooldown = 0.0f;
     combatCooldown = 0.0f;
     monsters.clear();
+
+    bandAmplitudes.fill(0.0f);
+    bandAboveThreshold.fill(false);
+    bandSpawnCooldown.fill(0.0f);
 
     engine.setGodMode(true);
     engine.giveWeapon(2); // wp_shotgun
@@ -50,12 +101,72 @@ void KillRoomScene::update(DoomEngine& engine, const ParameterMap& params,
         engine.setGodMode(true);
     }
 
+    updateBands(deltaTime);
     updateCombat(engine, params, deltaTime);
     updateCamera(engine, params, deltaTime);
-    updateMonsters(engine, params, deltaTime);
+    updateSpawning(engine, deltaTime);
     updateLighting(engine, params);
 
     engine.tick();
+}
+
+void KillRoomScene::updateBands(float deltaTime)
+{
+    // Compute per-band amplitudes from the FFT bins using the user's global
+    // band config. Same approach Spectrum2Scene uses — keeps the three
+    // scenes' spectral analysis consistent.
+    patch::GlobalConfig global = vizState.getGlobal();
+
+    const float* spectrum = analyzer.getMagnitudeSpectrum();
+    const int specSize = analyzer.getSpectrumSize();
+    const double sampleRate = analyzer.getSampleRate();
+    const float binWidth = static_cast<float>(sampleRate) /
+                           static_cast<float>(AudioAnalyzer::kFFTSize);
+
+    std::array<float, kNumBands> rawBand {};
+    for (int i = 0; i < kNumBands; ++i)
+    {
+        const auto& cfg = global.bands[static_cast<size_t>(i)];
+        int lowBin  = std::max(1, static_cast<int>(cfg.lowHz  / binWidth));
+        int highBin = std::min(specSize - 1, static_cast<int>(cfg.highHz / binWidth));
+        if (highBin < lowBin) std::swap(lowBin, highBin);
+
+        float sumSq = 0.0f;
+        int count = 0;
+        for (int bin = lowBin; bin <= highBin; ++bin)
+        {
+            float mag = spectrum[static_cast<size_t>(bin)];
+            sumSq += mag * mag;
+            count++;
+        }
+        rawBand[static_cast<size_t>(i)] =
+            count > 0 ? std::sqrt(sumSq / static_cast<float>(count)) : 0.0f;
+    }
+
+    // Peak-normalize across the 8 bands so the loudest band lands ~1.0.
+    float maxBand = *std::max_element(rawBand.begin(), rawBand.end());
+    if (maxBand > 0.0001f)
+    {
+        for (auto& b : rawBand)
+            b = std::min(1.0f, b / maxBand);
+    }
+
+    // Per-band envelope follower (one-pole, attack/release).
+    constexpr float kAttack  = 0.01f;
+    constexpr float kRelease = 0.15f;
+    float dt = std::max(0.001f, deltaTime);
+    float attackCoeff  = 1.0f - std::exp(-dt / kAttack);
+    float releaseCoeff = 1.0f - std::exp(-dt / kRelease);
+    for (int i = 0; i < kNumBands; ++i)
+    {
+        float target = rawBand[static_cast<size_t>(i)];
+        float& env = bandAmplitudes[static_cast<size_t>(i)];
+        env += (target > env ? attackCoeff : releaseCoeff) * (target - env);
+    }
+
+    // Tick down per-band spawn cooldowns.
+    for (auto& c : bandSpawnCooldown)
+        c = std::max(0.0f, c - deltaTime);
 }
 
 static float getParam(const ParameterMap& params, const std::string& key, float fallback)
@@ -111,16 +222,13 @@ void KillRoomScene::updateCamera(DoomEngine& engine, const ParameterMap& params,
     }
 }
 
-void KillRoomScene::updateMonsters(DoomEngine& engine, const ParameterMap& params,
-                                    float deltaTime)
+void KillRoomScene::updateSpawning(DoomEngine& engine, float deltaTime)
 {
-    spawnCooldown -= deltaTime;
+    (void)deltaTime;
 
-    // Age all monsters
+    // Age existing things and reap expired ones.
     for (auto& m : monsters)
         m.lifetime += deltaTime;
-
-    // Remove expired monsters first
     for (auto it = monsters.begin(); it != monsters.end();)
     {
         if (it->lifetime > kMonsterLifetime)
@@ -129,34 +237,61 @@ void KillRoomScene::updateMonsters(DoomEngine& engine, const ParameterMap& param
             it = monsters.erase(it);
         }
         else
+        {
             ++it;
+        }
     }
 
-    // Spawn on onset trigger — always in front of the player's view
-    float spawnTrigger = getParam(params, "monster_spawn", 0.0f);
+    // Per-band rising-edge spawn detector. Each band fires when its envelope
+    // crosses kSpawnHi, then waits for the envelope to fall below kSpawnLo
+    // before re-arming. A small per-band cooldown prevents rapid retriggering
+    // even on noisy bands.
+    patch::GlobalConfig global = vizState.getGlobal();
+    int spawnsThisFrame = 0;
+    constexpr int kMaxSpawnsPerFrame = 2;  // avoid bursty FFT frames flooding
 
-    if (spawnTrigger > 0.5f && spawnCooldown <= 0.0f)
+    for (int b = 0; b < kNumBands; ++b)
     {
-        // Evict oldest if at limit
-        while (static_cast<int>(monsters.size()) >= kMaxMonsters && !monsters.empty())
+        float amp = bandAmplitudes[static_cast<size_t>(b)];
+        bool& above = bandAboveThreshold[static_cast<size_t>(b)];
+        float& cd = bandSpawnCooldown[static_cast<size_t>(b)];
+
+        if (! above && amp > kSpawnHi && cd <= 0.0f)
         {
-            engine.removeThing(monsters.front().handle);
-            monsters.erase(monsters.begin());
+            above = true;
+            cd = kPerBandCooldown;
+
+            int spriteId = global.bands[static_cast<size_t>(b)].spriteId;
+            int mobjType = spriteToMobjType(spriteId);
+            if (mobjType < 0)
+                continue;  // gun or unknown — skip
+
+            // Evict oldest if at the global cap.
+            while (static_cast<int>(monsters.size()) >= kMaxMonsters && ! monsters.empty())
+            {
+                engine.removeThing(monsters.front().handle);
+                monsters.erase(monsters.begin());
+            }
+
+            // Spawn in front of the player, 200..280 map units ahead. The
+            // jitter (per-band offset) keeps multiple band hits from stacking
+            // on the exact same point.
+            float angleRad = static_cast<float>(camAngle) * (2.0f * 3.14159265f / 4294967296.0f);
+            float dist = 200.0f + static_cast<float>(b) * 10.0f;
+            int32_t spawnX = camX + static_cast<int32_t>(std::cos(angleRad) * dist * 65536.0f);
+            int32_t spawnY = camY + static_cast<int32_t>(std::sin(angleRad) * dist * 65536.0f);
+
+            int handle = engine.spawnThing(spawnX, spawnY, mobjType);
+            if (handle >= 0)
+            {
+                monsters.push_back({ handle, 0.0f });
+                if (++spawnsThisFrame >= kMaxSpawnsPerFrame)
+                    break;
+            }
         }
-
-        // Spawn directly in front of player, 200-300 map units ahead
-        float angleRad = static_cast<float>(camAngle) * (2.0f * 3.14159265f / 4294967296.0f);
-        float dist = 200.0f + std::fmod(spawnCooldown * 1000.0f, 100.0f);
-        int32_t spawnX = camX + static_cast<int32_t>(std::cos(angleRad) * dist * 65536.0f);
-        int32_t spawnY = camY + static_cast<int32_t>(std::sin(angleRad) * dist * 65536.0f);
-
-        int typeIdx = static_cast<int>(monsters.size()) % kNumMonsterTypes;
-
-        int handle = engine.spawnThing(spawnX, spawnY, kMonsterTypes[typeIdx]);
-        if (handle >= 0)
+        else if (above && amp < kSpawnLo)
         {
-            monsters.push_back({handle, 0.0f});
-            spawnCooldown = kSpawnCooldown;
+            above = false;
         }
     }
 }

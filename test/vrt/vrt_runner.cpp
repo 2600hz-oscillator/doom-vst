@@ -59,7 +59,7 @@ namespace
                                      const SignalBus& bus,
                                      const patch::VisualizerState& vizState)
     {
-        if (name == "killroom")  return std::make_unique<KillRoomScene>();
+        if (name == "killroom")  return std::make_unique<KillRoomScene>(analyzer, vizState);
         if (name == "analyzer")  return std::make_unique<AnalyzerRoomScene>(analyzer, bus);
         if (name == "spectrum2") return std::make_unique<Spectrum2Scene>(analyzer, vizState);
         std::fprintf(stderr, "Unknown scene '%s'. Use killroom | analyzer | spectrum2.\n",

@@ -116,7 +116,7 @@ void DoomViewport::newOpenGLContextCreated()
             DBG("DoomViewport: Could not find or load DOOM1.WAD");
         }
 
-        sceneManager.addScene(std::make_unique<KillRoomScene>());
+        sceneManager.addScene(std::make_unique<KillRoomScene>(analyzer, vizState));
         sceneManager.addScene(std::make_unique<AnalyzerRoomScene>(analyzer, signalBus));
         sceneManager.addScene(std::make_unique<Spectrum2Scene>(analyzer, vizState));
 
