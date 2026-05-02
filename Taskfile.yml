@@ -90,8 +90,15 @@ tasks:
       - |
         if [ "$(uname)" = "Linux" ]; then
           mkdir -p {{.BUILD_DIR}}-linux
-          cd {{.BUILD_DIR}}-linux && cmake .. -G Ninja
+          # Force system /usr/bin/c++ for the same reason build-mac forces
+          # /usr/bin/clang: flox's c++ from the dev env doesn't see apt-
+          # installed JUCE deps under /usr/include (X11, freetype, GTK).
+          cd {{.BUILD_DIR}}-linux
+          cmake .. -G Ninja \
+            -DCMAKE_C_COMPILER=/usr/bin/cc \
+            -DCMAKE_CXX_COMPILER=/usr/bin/c++
           cmake --build . -j$(nproc) --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
+          cd ..
           echo "Built {{.BUILD_DIR}}-linux/DoomViz_artefacts/VST3/{{.VST3_NAME}}"
           echo "(dist/ left untouched — that's the committed macOS signed binary)"
         else
