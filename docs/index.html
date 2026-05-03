@@ -229,13 +229,13 @@ routes:
 
         <h2>Install</h2>
 
-        <h3>macOS (no build)</h3>
-        <p>A prebuilt macOS VST3 is committed under <code>dist/DoomViz.vst3</code> (binary tracked via
-        git-lfs). It is signed with an Apple Developer ID and notarized + stapled by Apple, so it
-        loads in any DAW without Gatekeeper warnings or <code>xattr -cr</code> workarounds. To install,
-        copy the bundle into your user plugin folder:</p>
-<pre>cp -R dist/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/</pre>
-        <p>Then rescan plugins in your DAW. The committed binary is arm64 (Apple Silicon).</p>
+        <h3>macOS</h3>
+        <p>Download <code>DoomViz-vX.Y.Z.vst3.zip</code> from the latest
+        <a href="https://github.com/2600hz-oscillator/doom-vst/releases">GitHub Release</a>. The
+        bundle is signed with an Apple Developer ID and notarized + stapled by Apple, so it loads
+        in any DAW without Gatekeeper warnings or <code>xattr -cr</code> workarounds:</p>
+<pre>unzip DoomViz-vX.Y.Z.vst3.zip -d ~/Library/Audio/Plug-Ins/VST3/</pre>
+        <p>Then rescan plugins in your DAW. The bundle is arm64 (Apple Silicon).</p>
 
         <h3>Linux</h3>
         <p>Download the <code>DoomViz-vX.Y.Z-linux-x86_64.tar.gz</code> artifact from the latest
@@ -280,7 +280,8 @@ task test          # runs the render baseline test
 task --list        # see all tasks</pre>
         <p><code>DOOM1.WAD</code> (shareware) is auto-bundled into the plugin during build.</p>
         <p>From macOS, building a Linux VST3 runs inside a flox-managed Linux container.
-        A prebuilt macOS VST3 is committed under <code>dist/</code> (binary tracked via git-lfs).</p>
+        Signed + notarized release bundles are produced by tag-triggered CI on each
+        <code>vX.Y.Z</code> tag and attached to the matching GitHub Release.</p>
 
         <h2>Stack</h2>
         <ul>
