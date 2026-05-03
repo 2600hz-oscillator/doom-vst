@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "audio/SignalBus.h"
 #include "audio/MidiHandler.h"
+#include "audio/SamplerEngine.h"
 #include "patch/VisualizerState.h"
 #include <memory>
 
@@ -59,6 +60,7 @@ private:
     SignalBus signalBus;
     MidiHandler midiHandler;
     patch::VisualizerState visualizerState;
+    SamplerEngine samplerEngine { visualizerState };
     std::vector<float> monoBuffer;
     double currentSampleRate = 44100.0;
 

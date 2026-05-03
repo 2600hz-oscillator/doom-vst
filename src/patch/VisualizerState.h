@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <juce_core/juce_core.h>
 
 namespace patch
@@ -96,6 +97,36 @@ struct AnalyzerConfig
     static AnalyzerConfig makeDefault() { return {}; }
 };
 
+// One sampler pad. `sampleData` is decoded float mono at the host sample
+// rate captured in `sourceSampleRate` at load time. An empty `sampleData`
+// means the pad has no sample loaded.
+struct PadConfig
+{
+    juce::String       name;             // filename or "" if empty
+    std::vector<float> sampleData;       // mono, host SR at load time
+    double             sourceSampleRate; // sample rate the buffer is at
+    int                startSample;      // playback start (inclusive)
+    int                endSample;        // playback end (exclusive)
+
+    static PadConfig makeDefault() { return { {}, {}, 0.0, 0, 0 }; }
+};
+
+constexpr int kNumPads = 9;
+
+// 9-pad sampler state (BFG-SP404). MIDI channels 1-9 each address one pad;
+// triggers run through SamplerEngine on the audio thread.
+struct SamplerConfig
+{
+    std::array<PadConfig, kNumPads> pads;
+
+    static SamplerConfig makeDefault()
+    {
+        SamplerConfig s {};
+        for (auto& p : s.pads) p = PadConfig::makeDefault();
+        return s;
+    }
+};
+
 // Persistent shared state for the whole visualizer. GUI thread writes
 // (Apply button); render thread reads (per-frame snapshot copy under
 // SpinLock). The lock is only contended during a click, so the render-
@@ -120,6 +151,9 @@ public:
     AnalyzerConfig getAnalyzer() const;
     void           setAnalyzer(const AnalyzerConfig& a);
 
+    SamplerConfig  getSampler() const;
+    void           setSampler(const SamplerConfig& s);
+
     // Serialize/restore as XML (for AudioProcessor state save/restore).
     juce::String toXmlString() const;
     void         fromXmlString(const juce::String& xml);
@@ -130,6 +164,7 @@ private:
     SpectrumConfig spectrum { SpectrumConfig::makeDefault() };
     KillRoomConfig killRoom { KillRoomConfig::makeDefault() };
     AnalyzerConfig analyzer { AnalyzerConfig::makeDefault() };
+    SamplerConfig  sampler  { SamplerConfig::makeDefault() };
 };
 
 } // namespace patch
