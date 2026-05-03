@@ -51,9 +51,11 @@ namespace
 
 // --- ControlPanel ---
 
-ControlPanel::ControlPanel(patch::VisualizerState& s)
+ControlPanel::ControlPanel(patch::VisualizerState& s,
+                            std::function<double()> getHostSr,
+                            std::function<void(int)> triggerPad)
     : state(s),
-      samplerPanel(s)
+      samplerPanel(s, std::move(getHostSr), std::move(triggerPad))
 {
     auto styleHeader = [](juce::Label& l, juce::Colour col, float size, bool bold)
     {
@@ -346,12 +348,17 @@ void ControlPanel::selectTab(ActiveTab tab)
     killRoomSection.setVisible(vfx && activeScene == 0);
     analyzerSection.setVisible(vfx && activeScene == 1);
 
-    // SFX-tab widgets.
+    // SFX-tab widgets. Refresh from state so DAW project restore + later
+    // setStateInformation calls show the right pad names.
+    if (! vfx)
+        samplerPanel.loadFromState(state.getSampler());
     samplerPanel.setVisible(! vfx);
 
-    // Apply / Revert apply to whichever tab the user is on (for now SFX
-    // has no editable state, but the buttons stay so Phase 6's pad UI
-    // can reuse the same dirty/Apply pipeline).
+    // Apply / Revert belong to the VFX staging pipeline. SFX edits
+    // (LOAD, TRIG, marker drags) commit live, so these buttons would
+    // be dead weight on the SFX tab — hide them.
+    applyBtn .setVisible(vfx);
+    revertBtn.setVisible(vfx);
 }
 
 void ControlPanel::setFullscreenState(bool fullscreen)
@@ -405,15 +412,18 @@ void ControlPanel::loadFromState()
 {
     bandRows.loadFromState(state.getGlobal());
     spectrumSection.loadFromState(state.getSpectrum());
+    samplerPanel.loadFromState(state.getSampler());
 }
 
 // --- ControlWindow ---
 
-ControlWindow::ControlWindow(patch::VisualizerState& s)
+ControlWindow::ControlWindow(patch::VisualizerState& s,
+                              std::function<double()> getHostSr,
+                              std::function<void(int)> triggerPad)
     : DocumentWindow("DoomViz Controls",
                      juce::Colour(0xff1a1a1a),
                      DocumentWindow::closeButton | DocumentWindow::minimiseButton),
-      panel(s)
+      panel(s, std::move(getHostSr), std::move(triggerPad))
 {
     setContentNonOwned(&panel, true);
     setResizable(false, false);

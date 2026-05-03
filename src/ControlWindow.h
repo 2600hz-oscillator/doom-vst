@@ -15,7 +15,13 @@
 class ControlPanel : public juce::Component
 {
 public:
-    explicit ControlPanel(patch::VisualizerState& state);
+    // `getHostSampleRate` is invoked at sample-load time so the SamplerPanel
+    // can resample WAVs to the running DAW's sample rate. `triggerPad`
+    // fires a one-shot preview at root pitch when the user clicks a pad's
+    // TRIG button.
+    ControlPanel(patch::VisualizerState& state,
+                 std::function<double()> getHostSampleRate,
+                 std::function<void(int)> triggerPad);
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -88,7 +94,9 @@ private:
 class ControlWindow : public juce::DocumentWindow
 {
 public:
-    explicit ControlWindow(patch::VisualizerState& state);
+    ControlWindow(patch::VisualizerState& state,
+                  std::function<double()> getHostSampleRate,
+                  std::function<void(int)> triggerPad);
 
     void closeButtonPressed() override;
 

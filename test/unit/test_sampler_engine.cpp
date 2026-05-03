@@ -90,6 +90,36 @@ TEST_CASE("SamplerEngine: MIDI channels 10..16 do not trigger sampler voices",
         REQUIRE(eng.activeVoiceCount(p) == 0);
 }
 
+TEST_CASE("SamplerEngine: requestPreview fires a voice on next processMidi",
+          "[sampler][engine]")
+{
+    patch::VisualizerState state;
+    state.setSampler(oneTonePad(0, std::vector<float>(64, 0.5f)));
+
+    SamplerEngine eng(state);
+    eng.prepare(48000.0, 512);
+
+    eng.requestPreview(0); // GUI thread
+    REQUIRE(eng.activeVoiceCount(0) == 0); // not yet — needs the audio-thread drain
+
+    juce::MidiBuffer empty;
+    eng.processMidi(empty);
+    REQUIRE(eng.activeVoiceCount(0) == 1);
+}
+
+TEST_CASE("SamplerEngine: requestPreview on empty pad is a no-op",
+          "[sampler][engine]")
+{
+    patch::VisualizerState state; // all pads empty
+    SamplerEngine eng(state);
+    eng.prepare(48000.0, 512);
+
+    eng.requestPreview(3);
+    juce::MidiBuffer empty;
+    eng.processMidi(empty);
+    REQUIRE(eng.activeVoiceCount(3) == 0);
+}
+
 TEST_CASE("SamplerEngine: render produces non-silent output after a NoteOn",
           "[sampler][engine]")
 {

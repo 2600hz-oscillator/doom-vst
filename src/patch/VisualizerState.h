@@ -154,6 +154,11 @@ public:
     SamplerConfig  getSampler() const;
     void           setSampler(const SamplerConfig& s);
 
+    // Marker-only update path. Avoids copying the full SamplerConfig
+    // (which contains all 9 sample buffers) on every drag pixel of the
+    // waveform start/end handles.
+    void           setPadMarkers(int padIndex, int startSample, int endSample);
+
     // Serialize/restore as XML (for AudioProcessor state save/restore).
     juce::String toXmlString() const;
     void         fromXmlString(const juce::String& xml);

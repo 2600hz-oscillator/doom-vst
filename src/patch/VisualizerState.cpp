@@ -103,6 +103,14 @@ void VisualizerState::setSampler(const SamplerConfig& s)
     sampler = s;
 }
 
+void VisualizerState::setPadMarkers(int padIndex, int startSample, int endSample)
+{
+    if (padIndex < 0 || padIndex >= kNumPads) return;
+    const juce::SpinLock::ScopedLockType l(lock);
+    sampler.pads[padIndex].startSample = startSample;
+    sampler.pads[padIndex].endSample   = endSample;
+}
+
 juce::String VisualizerState::toXmlString() const
 {
     GlobalConfig   g = getGlobal();
