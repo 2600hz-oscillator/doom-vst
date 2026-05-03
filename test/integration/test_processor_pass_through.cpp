@@ -5,6 +5,10 @@
 
 namespace
 {
+    // POSIX exposes M_PI through <cmath>; MSVC requires _USE_MATH_DEFINES
+    // before <math.h>. Use a portable local constant.
+    constexpr double kPi = 3.14159265358979323846;
+
     constexpr double kSampleRate = 44100.0;
     constexpr int    kBlockSize  = 512;
 
@@ -16,7 +20,7 @@ namespace
 
     void fillSine(juce::AudioBuffer<float>& buf, float freqHz, float amp = 0.5f)
     {
-        const double w = 2.0 * M_PI * freqHz / kSampleRate;
+        const double w = 2.0 * kPi * freqHz / kSampleRate;
         for (int ch = 0; ch < buf.getNumChannels(); ++ch)
         {
             float* p = buf.getWritePointer(ch);

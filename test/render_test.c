@@ -11,6 +11,12 @@
 #include <string.h>
 #include <math.h>
 
+// MSVC's <math.h> doesn't expose M_PI without _USE_MATH_DEFINES; provide
+// a portable fallback so this harness compiles cleanly on every platform.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // Doom mobjtype_t values we need (from info.h enum)
 #define MT_TROOP 11  // Imp (MT_PLAYER=0, ..., MT_CHAINGUY=10, MT_TROOP=11)
 
