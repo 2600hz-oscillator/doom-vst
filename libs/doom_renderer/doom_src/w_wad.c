@@ -73,7 +73,11 @@ void**			lumpcache;
 
 #define strcmpi	strcasecmp
 
-void strupr (char* s)
+// File-local upper-casing helper. Originally named `strupr`, but Windows
+// CRT exposes a `strupr` returning `char*` via <string.h>, which conflicts
+// with this `void`-returning definition (error C2040). Rename to avoid the
+// clash; the symbol isn't used outside this file.
+static void doom_strupr (char* s)
 {
     while (*s) { *s = toupper(*s); s++; }
 }
@@ -374,7 +378,7 @@ int W_CheckNumForName (char* name)
     name8.s[8] = 0;
 
     // case insensitive
-    strupr (name8.s);		
+    doom_strupr (name8.s);		
 
     v1 = name8.x[0];
     v2 = name8.x[1];
