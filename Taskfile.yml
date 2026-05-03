@@ -109,6 +109,60 @@ tasks:
           exit 1
         fi
 
+  build-win:
+    desc: Build all Windows targets (VST3 + tests). Runs natively on a Windows host with Visual Studio 2022 (via Git Bash). On other hosts, prints CI / Windows-host instructions. Leaves dist/ alone.
+    cmds:
+      - |
+        case "$(uname -s 2>/dev/null || echo Windows)" in
+          MINGW*|MSYS*|CYGWIN*|Windows*)
+            mkdir -p {{.BUILD_DIR}}-win
+            cd {{.BUILD_DIR}}-win
+            # VS 2022 generator + x64 architecture. cmake auto-discovers the
+            # MSBuild toolchain installed by Visual Studio Build Tools.
+            cmake .. -G "Visual Studio 17 2022" -A x64
+            cmake --build . --config Release --parallel \
+              --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
+            cd ..
+            echo "Built {{.BUILD_DIR}}-win/DoomViz_artefacts/Release/VST3/{{.VST3_NAME}}"
+            echo "(dist/ left untouched — that's the committed macOS signed binary)"
+            ;;
+          *)
+            echo "Cross-platform Windows builds aren't supported from this host."
+            echo "To build a Windows VST3:"
+            echo "  - Run 'task build-win' on a Windows host with Visual Studio 2022 + Git Bash, OR"
+            echo "  - Push to a branch and let the CI 'build-windows' job produce the artifact."
+            exit 1
+            ;;
+        esac
+
+  test-win:
+    desc: Run unit + integration + render_baseline tests against the build-win directory (Windows only — VRT is macOS-pinned, same as Linux)
+    deps: [build-win]
+    cmds:
+      - |
+        case "$(uname -s 2>/dev/null || echo Windows)" in
+          MINGW*|MSYS*|CYGWIN*|Windows*)
+            cd {{.BUILD_DIR}}-win && ctest -C Release -L 'unit|integration' --output-on-failure
+            ;;
+          *) echo "test-win only runs on Windows"; exit 1 ;;
+        esac
+
+  install-win:
+    desc: Install the Windows VST3 to %CommonProgramFiles%\VST3\ (typically C:\Program Files\Common Files\VST3\)
+    deps: [build-win]
+    cmds:
+      - |
+        case "$(uname -s 2>/dev/null || echo Windows)" in
+          MINGW*|MSYS*|CYGWIN*|Windows*)
+            DEST="${CommonProgramFiles:-/c/Program Files/Common Files}/VST3"
+            mkdir -p "$DEST"
+            rm -rf "$DEST/{{.VST3_NAME}}"
+            cp -R {{.BUILD_DIR}}-win/DoomViz_artefacts/Release/VST3/{{.VST3_NAME}} "$DEST/"
+            echo "Installed to $DEST/{{.VST3_NAME}}"
+            ;;
+          *) echo "install-win only runs on Windows"; exit 1 ;;
+        esac
+
   test-linux:
     desc: Run unit + integration + render_baseline tests against the build-linux directory (Linux only — VRT is macOS-only since baselines are platform-pinned)
     deps: [build-linux]

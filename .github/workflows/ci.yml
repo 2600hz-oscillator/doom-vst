@@ -107,6 +107,40 @@ jobs:
           path: test/vrt/output/
           retention-days: 30
 
+  # Smoke build for Windows x64. Verifies the codebase compiles cleanly under
+  # MSVC and the test binaries pass. No artifact upload yet — that's Phase 3
+  # of the Windows plan. CI doesn't use Task here because Windows runners
+  # don't have bash by default; we inline the cmake commands instead.
+  build-windows:
+    name: Build + test (Windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Configure (Visual Studio 17 2022, x64)
+        run: cmake -B build-win -G "Visual Studio 17 2022" -A x64
+
+      - name: Build VST3 + tests
+        run: >
+          cmake --build build-win --config Release --parallel
+          --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
+
+      - name: Run tests (unit + integration + render_baseline; VRT is macOS-pinned)
+        run: ctest --test-dir build-win -C Release -L "unit|integration" --output-on-failure
+
+      - name: Upload unsigned VST3 (build artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoomViz-vst3-windows-${{ github.sha }}
+          path: build-win/DoomViz_artefacts/Release/VST3/DoomViz.vst3
+          retention-days: 30
+
   # Tag-triggered release: signs + notarizes + staples + attaches the VST3
   # to a GitHub Release. Gated on `refs/tags/v*` so only deliberate tags
   # like `v0.2.0` trigger this — pushes to main only run the build job.
