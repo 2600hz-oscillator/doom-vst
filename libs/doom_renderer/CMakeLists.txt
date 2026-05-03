@@ -62,6 +62,13 @@ if(NOT MSVC)
         -Wno-unused-variable
         -Wno-missing-braces
     )
+else()
+    # Force-include the Windows compat header so every .c TU sees the
+    # alloca / strcasecmp / strncasecmp shims without per-file #ifdef
+    # blocks.
+    target_compile_options(doom_renderer PRIVATE
+        /FI${CMAKE_CURRENT_SOURCE_DIR}/include/windows_compat.h
+    )
 endif()
 
 # Link math library. Windows' MSVC links libm implicitly via the CRT;
