@@ -136,6 +136,30 @@ TEST_CASE("VisualizerState: sampler defaults are 9 empty pads",
     }
 }
 
+TEST_CASE("VisualizerState: setPadMarkers updates only start/end on the named pad",
+          "[viz_state][sampler]")
+{
+    patch::VisualizerState state;
+    auto sm = patch::SamplerConfig::makeDefault();
+    sm.pads[2].name             = "test.wav";
+    sm.pads[2].sampleData       = std::vector<float>(1000, 0.5f);
+    sm.pads[2].startSample      = 0;
+    sm.pads[2].endSample        = 1000;
+    state.setSampler(sm);
+
+    state.setPadMarkers(2, 100, 800);
+
+    auto smr = state.getSampler();
+    REQUIRE(smr.pads[2].startSample        == 100);
+    REQUIRE(smr.pads[2].endSample          == 800);
+    REQUIRE(smr.pads[2].name               == juce::String("test.wav"));
+    REQUIRE(smr.pads[2].sampleData.size()  == 1000); // unchanged
+
+    // Out-of-range pad is a no-op, not a crash.
+    state.setPadMarkers(99, 0, 0);
+    state.setPadMarkers(-1, 0, 0);
+}
+
 TEST_CASE("VisualizerState: sampler XML round-trip preserves pad metadata + sample data",
           "[viz_state][sampler]")
 {

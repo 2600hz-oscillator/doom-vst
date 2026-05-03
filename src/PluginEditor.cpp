@@ -49,7 +49,10 @@ DoomVizEditor::DoomVizEditor(DoomVizProcessor& p)
 
     // Create the floating control window (single-window UI; patch settings
     // live inline rather than in a separate floating window).
-    controlWindow = std::make_unique<ControlWindow>(p.getVisualizerState());
+    controlWindow = std::make_unique<ControlWindow>(
+        p.getVisualizerState(),
+        [&p]() { return p.getCurrentSampleRate(); },
+        [&p](int padIdx) { p.getSamplerEngine().requestPreview(padIdx); });
 
     controlWindow->getPanel().onSceneChange = [&p](int scene)
     {

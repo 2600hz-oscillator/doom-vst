@@ -22,9 +22,15 @@ void SamplerEngine::processMidi(const juce::MidiBuffer& midi)
 {
     // Pull the latest sampler state once per block. Voices already in
     // flight will pick up the new sample buffer the next time they
-    // render — Phase 6's LOAD-button work will swap to a shared_ptr
-    // model so live voices don't glitch on a pad reload.
+    // render.
     liveConfig = vizState.getSampler();
+
+    // Drain any GUI-requested previews. Atomic exchange is fence enough
+    // to see the GUI thread's pendingPreview bit + new sampleData.
+    const juce::uint32 pending = pendingPreview.exchange(0, std::memory_order_acquire);
+    for (int i = 0; i < patch::kNumPads; ++i)
+        if (pending & (1u << i))
+            noteOn(i, 60, 100.0f / 127.0f);
 
     for (const auto metadata : midi)
     {
@@ -34,6 +40,12 @@ void SamplerEngine::processMidi(const juce::MidiBuffer& midi)
         if (channel < 1 || channel > patch::kNumPads) continue;
         noteOn(channel - 1, msg.getNoteNumber(), msg.getFloatVelocity());
     }
+}
+
+void SamplerEngine::requestPreview(int padIndex)
+{
+    if (padIndex < 0 || padIndex >= patch::kNumPads) return;
+    pendingPreview.fetch_or(1u << padIndex, std::memory_order_release);
 }
 
 void SamplerEngine::noteOn(int padIndex, int midiNote, float velocity01)

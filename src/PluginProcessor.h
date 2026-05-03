@@ -56,6 +56,11 @@ public:
     patch::VisualizerState& getVisualizerState() { return visualizerState; }
     const patch::VisualizerState& getVisualizerState() const { return visualizerState; }
 
+    // Used by the SFX tab's TRIG buttons to fire a one-shot preview at
+    // root pitch. requestPreview is the only audio-thread-safe entry
+    // point on SamplerEngine for callers outside processBlock.
+    SamplerEngine& getSamplerEngine() { return samplerEngine; }
+
 private:
     SignalBus signalBus;
     MidiHandler midiHandler;

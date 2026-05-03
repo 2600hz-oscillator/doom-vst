@@ -58,6 +58,8 @@ target_sources(DoomViz PRIVATE
     src/patch/SpectrumSection.cpp
     src/patch/PlaceholderSection.cpp
     src/patch/SamplerPanel.cpp
+    src/patch/PadCell.cpp
+    src/patch/WaveformView.cpp
     $<$<PLATFORM_ID:Darwin>:src/MacFullscreen.mm>
 )
 
@@ -76,6 +78,7 @@ target_compile_definitions(DoomViz PUBLIC
 
 target_link_libraries(DoomViz PRIVATE
     juce::juce_audio_processors
+    juce::juce_audio_formats
     juce::juce_audio_utils
     juce::juce_gui_basics
     juce::juce_opengl
@@ -117,6 +120,18 @@ foreach(target DoomViz_VST3 DoomViz_AU DoomViz_Standalone)
             "${WAD_SRC}"
             "${BUNDLE_DIR_EXPR}/Contents/Resources/DOOM1.WAD"
         COMMENT "Bundling DOOM1.WAD into ${target}"
+    )
+
+    # Bundle the extracted shareware Doom sounds (BFG-SP404 Phase 1) so
+    # the LOAD button's FileChooser defaults to a folder full of usable
+    # samples on a fresh DAW install. ~55 small WAVs, ~2 MB total.
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "${BUNDLE_DIR_EXPR}/Contents/Resources/sounds"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/resources/sounds"
+            "${BUNDLE_DIR_EXPR}/Contents/Resources/sounds"
+        COMMENT "Bundling Doom shareware sounds into ${target}"
     )
 endforeach()
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include "VarispeedEngine.h"
 #include "patch/VisualizerState.h"
@@ -27,6 +28,12 @@ public:
     // Visible for testing — equivalent to receiving a MIDI NoteOn.
     void noteOn(int padIndex, int midiNote, float velocity01);
 
+    // GUI-safe: request a one-shot preview at root pitch (MIDI 60, vel ~100).
+    // The audio thread drains pending requests on its next processMidi call.
+    // Lock-free atomic bitmask; idempotent within a block (multiple clicks
+    // collapse to a single trigger per block).
+    void requestPreview(int padIndex);
+
     // Visible for testing — number of currently-active voices on a pad.
     int activeVoiceCount(int padIndex) const;
 
@@ -50,6 +57,11 @@ private:
     double sampleRate { 44100.0 };
     patch::SamplerConfig liveConfig { patch::SamplerConfig::makeDefault() };
     std::array<PadVoices, patch::kNumPads> voices {};
+
+    // Bit i = preview requested for pad i. GUI thread sets via fetch_or;
+    // audio thread atomic-exchanges to 0 once per block and triggers each
+    // set bit. kNumPads ≤ 32 so a single uint32_t is sufficient.
+    std::atomic<juce::uint32> pendingPreview { 0 };
 
     // Pre-sized scratch for one block of mono voice output. Sized in
     // prepare(); never reallocated on the audio thread.
