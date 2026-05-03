@@ -104,8 +104,20 @@ Then rescan plugins in your DAW.
 ### Linux (tagged release)
 Download the `DoomViz-vX.Y.Z-linux-x86_64.tar.gz` artifact from the latest [GitHub Release](https://github.com/2600hz-oscillator/doom-vst/releases) and extract into `~/.vst3/` (per-user) or `/usr/lib/vst3/` (system-wide).
 
-### Windows
-In flight. CI build job in place; tag-triggered release publishing pending.
+### Windows (tagged release)
+Download the `DoomViz-vX.Y.Z-windows-x64.zip` artifact from the latest [GitHub Release](https://github.com/2600hz-oscillator/doom-vst/releases) and extract the `DoomViz.vst3` folder into one of the standard VST3 locations:
+
+- **System-wide** (requires admin): `C:\Program Files\Common Files\VST3\`
+- **Per-user**: `%LOCALAPPDATA%\Programs\Common\VST3\`
+
+```powershell
+# PowerShell, system-wide:
+Expand-Archive DoomViz-v0.4.0-windows-x64.zip -DestinationPath "$env:CommonProgramFiles\VST3\"
+```
+
+Then rescan plugins in your DAW.
+
+The Windows build is **not yet Authenticode-signed**, so the first time your DAW loads the plugin you'll see a SmartScreen "Windows protected your PC" warning. Click **More info** → **Run anyway**, or right-click `DoomViz.vst3\Contents\x86_64-win\DoomViz.vst3` → **Properties** → check **Unblock** before scanning. After that one-time unblock the plugin loads silently every subsequent run.
 
 ## Building
 
