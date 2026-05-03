@@ -17,7 +17,7 @@ void DoomVizProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
     monoBuffer.resize(static_cast<size_t>(samplesPerBlock), 0.0f);
-    samplerEngine.prepare(sampleRate);
+    samplerEngine.prepare(sampleRate, samplesPerBlock);
 }
 
 void DoomVizProcessor::releaseResources()
@@ -66,6 +66,11 @@ void DoomVizProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // Parse MIDI events
     midiHandler.processMidiBuffer(midiMessages);
+
+    // Sampler MIDI: ch 1-9 NoteOn → pad triggers. Refreshes its
+    // SamplerConfig snapshot before dispatching, so newly-loaded pads
+    // are audible from the next block onward.
+    samplerEngine.processMidi(midiMessages);
 
     // Mix sampler voices on top of the input passthrough.
     samplerEngine.render(buffer, numSamples);

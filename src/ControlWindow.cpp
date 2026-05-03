@@ -17,6 +17,7 @@ namespace
     constexpr auto kBlackText   = juce::uint32 { 0xff050200 };
 
     constexpr int kTitleH       = 32;
+    constexpr int kTabH         = 28;
     constexpr int kHeaderH      = 18;
     constexpr int kRowH         = 28;
     constexpr int kBtnH         = 32;
@@ -51,7 +52,8 @@ namespace
 // --- ControlPanel ---
 
 ControlPanel::ControlPanel(patch::VisualizerState& s)
-    : state(s)
+    : state(s),
+      samplerPanel(s)
 {
     auto styleHeader = [](juce::Label& l, juce::Colour col, float size, bool bold)
     {
@@ -60,6 +62,14 @@ ControlPanel::ControlPanel(patch::VisualizerState& s)
                                     bold ? juce::Font::bold : 0));
         l.setJustificationType(juce::Justification::centredLeft);
     };
+
+    // Top-level tab strip: [DOOMED VFX] [DOOMED SFX].
+    tabVfx.onClick = [this]() { selectTab(ActiveTab::Vfx); };
+    tabSfx.onClick = [this]() { selectTab(ActiveTab::Sfx); };
+    addAndMakeVisible(tabVfx);
+    addAndMakeVisible(tabSfx);
+    styleTab(tabVfx, true);
+    styleTab(tabSfx, false);
 
     auto setupSceneButton = [this](juce::TextButton& btn, int index)
     {
@@ -107,6 +117,7 @@ ControlPanel::ControlPanel(patch::VisualizerState& s)
     addChildComponent(spectrumSection);
     addChildComponent(killRoomSection);
     addChildComponent(analyzerSection);
+    addChildComponent(samplerPanel);
 
     bandRows.onEdit        = [this]() { markDirty(); };
     spectrumSection.onEdit = [this]() { markDirty(); };
@@ -128,11 +139,14 @@ ControlPanel::ControlPanel(patch::VisualizerState& s)
 
     loadFromState();
     setActiveScene(0);
+    selectTab(ActiveTab::Vfx);
 
-    // Final size: title + scene block + global section + active scene section
-    // + footer + padding. Tuned to fit 8 band rows + the spectrum section
-    // without scrolling.
+    // Final size: title + tab strip + scene block + global section +
+    // active scene section + footer + padding. Tuned to fit 8 band rows
+    // + the spectrum section without scrolling. SFX tab fits inside the
+    // same envelope (no resize needed in 1.0).
     int contentH = kTitleH + 8                     // title strip + gap
+                 + kTabH + 8                        // tab strip + gap
                  + 28 + 10                          // scene label row
                  + kBtnH + 10                       // scene buttons
                  + kBtnH + 8                        // fullscreen
@@ -195,6 +209,19 @@ void ControlPanel::resized()
     auto area = getLocalBounds().reduced(kPad);
     area.removeFromTop(kTitleH);   // skip painted title strip
     area.removeFromTop(8);
+
+    // Tab strip — half-width buttons.
+    auto tabRow = area.removeFromTop(kTabH);
+    int halfW = tabRow.getWidth() / 2;
+    tabVfx.setBounds(tabRow.removeFromLeft(halfW));
+    tabSfx.setBounds(tabRow);
+    area.removeFromTop(8);
+
+    // Sampler panel covers the full area below the tab strip when SFX
+    // is the active tab; we save the area here so the SFX layout can
+    // reuse it. VFX layout continues to walk `area` row by row below.
+    auto sfxArea = area;
+    samplerPanel.setBounds(sfxArea);
 
     auto sceneRow = area.removeFromTop(28);
     sceneLabel.setBounds(sceneRow.removeFromLeft(70));
@@ -271,10 +298,60 @@ void ControlPanel::setActiveScene(int sceneIndex)
     activeScene = sceneIndex;
     highlightScene(sceneIndex);
 
-    // Show only the matching section component.
-    spectrumSection.setVisible(sceneIndex == 2);
-    killRoomSection.setVisible(sceneIndex == 0);
-    analyzerSection.setVisible(sceneIndex == 1);
+    // Only the VFX tab shows scene sections; SFX tab forces them hidden.
+    const bool vfx = (activeTab == ActiveTab::Vfx);
+    spectrumSection.setVisible(vfx && sceneIndex == 2);
+    killRoomSection.setVisible(vfx && sceneIndex == 0);
+    analyzerSection.setVisible(vfx && sceneIndex == 1);
+}
+
+void ControlPanel::styleTab(juce::TextButton& btn, bool active)
+{
+    if (active)
+    {
+        btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kAccentRed));
+        btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kBlackText));
+    }
+    else
+    {
+        btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kStoneLight));
+        btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kDimGold));
+    }
+}
+
+void ControlPanel::selectTab(ActiveTab tab)
+{
+    // Pending edits silently revert when swapping tabs — same pattern as
+    // scene switching.
+    if (dirty) revertChanges();
+
+    activeTab = tab;
+    styleTab(tabVfx, tab == ActiveTab::Vfx);
+    styleTab(tabSfx, tab == ActiveTab::Sfx);
+
+    const bool vfx = (tab == ActiveTab::Vfx);
+
+    // VFX-tab widgets.
+    sceneLabel  .setVisible(vfx);
+    activeLabel .setVisible(vfx);
+    sceneA      .setVisible(vfx);
+    sceneB      .setVisible(vfx);
+    sceneC      .setVisible(vfx);
+    fullscreenBtn.setVisible(vfx);
+    displayLabel.setVisible(vfx);
+    globalHeader.setVisible(vfx);
+    sceneHeader .setVisible(vfx);
+    bandRows    .setVisible(vfx);
+    spectrumSection.setVisible(vfx && activeScene == 2);
+    killRoomSection.setVisible(vfx && activeScene == 0);
+    analyzerSection.setVisible(vfx && activeScene == 1);
+
+    // SFX-tab widgets.
+    samplerPanel.setVisible(! vfx);
+
+    // Apply / Revert apply to whichever tab the user is on (for now SFX
+    // has no editable state, but the buttons stay so Phase 6's pad UI
+    // can reuse the same dirty/Apply pipeline).
 }
 
 void ControlPanel::setFullscreenState(bool fullscreen)
