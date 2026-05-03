@@ -130,8 +130,11 @@ jobs:
           cmake --build build-win --config Release --parallel
           --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
 
-      - name: Run tests (unit + integration + render_baseline; VRT is macOS-pinned)
-        run: ctest --test-dir build-win -C Release -L "unit|integration" --output-on-failure
+      # Excludes the `shell` label — render_baseline is a bash harness that
+      # Windows ctest can't spawn directly (returns BAD_COMMAND). Same
+      # rendering coverage exists in the Catch2 integration tests.
+      - name: Run tests (unit + integration; VRT macOS-only, render_baseline shell-only)
+        run: ctest --test-dir build-win -C Release -L "unit|integration" -LE "shell" --output-on-failure
 
       - name: Upload unsigned VST3 (build artifact)
         if: always()

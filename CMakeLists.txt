@@ -131,7 +131,11 @@ add_test(
     COMMAND ${CMAKE_SOURCE_DIR}/test/test_render_baseline.sh ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-set_tests_properties(render_baseline PROPERTIES LABELS "integration")
+# Dual-label so Windows can opt out: the shell-script harness can't be
+# spawned by ctest on windows-latest (BAD_COMMAND). The test still runs
+# on Linux + macOS via the `integration` label; Windows excludes the
+# `shell` label.
+set_tests_properties(render_baseline PROPERTIES LABELS "integration;shell")
 
 # --- Unit tests (Catch2) ---
 # Console app rather than plain add_executable: JUCE's CMake expects the
