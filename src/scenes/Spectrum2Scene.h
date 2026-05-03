@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "audio/BandAnalyzer.h"
 #include "patch/VisualizerState.h"
 #include <vector>
 #include <cstdint>
@@ -32,8 +33,8 @@ private:
     const patch::VisualizerState& vizState;
     std::vector<uint8_t> rgbaBuffer;
 
-    // Per-band amplitudes (post-envelope, post-normalization, in [0,1])
-    std::array<float, kNumDisplayBands> bandAmplitudes {};
+    // FFT-bin → 8-band envelope follower (shared across scenes).
+    BandAnalyzer bandEnv;
     // Per-band slider gain pulled from settings each Apply (0..1).
     std::array<float, kNumDisplayBands> bandGains01 {};
     // Per-band sprite ID pulled from settings each frame.

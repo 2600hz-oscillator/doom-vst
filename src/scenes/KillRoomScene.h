@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "audio/BandAnalyzer.h"
 #include "patch/VisualizerState.h"
 #include <vector>
 #include <array>
@@ -50,7 +51,7 @@ private:
     static constexpr float kSpawnLo          = 0.4f;  // hysteresis low edge
     static constexpr float kPerBandCooldown  = 0.5f;  // sec between spawns per band
 
-    std::array<float, kNumBands> bandAmplitudes {};
+    BandAnalyzer bandEnv;
     std::array<bool,  kNumBands> bandAboveThreshold {};
     std::array<float, kNumBands> bandSpawnCooldown {};
 

@@ -46,7 +46,7 @@ void Spectrum2Scene::init(DoomEngine& engine)
     // Forcing lastSeenStoredDoomtexIndex to -1 makes the next update()
     // treat the stored config as a fresh manual-override, which re-syncs
     // doomtexIndex from state.
-    bandAmplitudes.fill(0.0f);
+    bandEnv.reset();
     overallRMS = 0.0f;
     onsetTrigger = false;
     time = 0.0f;
@@ -87,56 +87,15 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     patch::SpectrumConfig spec   = vizState.getSpectrum();
     currentVibe = spec.vibe;
 
-    // Compute per-band amplitudes from the raw FFT magnitude spectrum using
-    // the user-configured Hz ranges. Replaces the prior fixed 8-from-16
-    // mapping so the UI's lowHz/highHz textboxes drive band membership.
-    const float* spectrum = analyzer.getMagnitudeSpectrum();
-    const int specSize = analyzer.getSpectrumSize();
-    const double sampleRate = analyzer.getSampleRate();
-    const float binWidth = static_cast<float>(sampleRate) / static_cast<float>(AudioAnalyzer::kFFTSize);
-
-    std::array<float, kNumDisplayBands> rawBand {};
+    // FFT bins → 8 user-configured band envelopes. The per-band gain01 and
+    // spriteId arrays still get refreshed here since render() reads them
+    // (they're not part of the envelope computation).
+    bandEnv.update(analyzer, global, deltaTime);
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
         const auto& cfg = global.bands[static_cast<size_t>(i)];
         bandGains01[static_cast<size_t>(i)] = cfg.gain01;
         bandSpriteIds[static_cast<size_t>(i)] = cfg.spriteId;
-
-        int lowBin = std::max(1, static_cast<int>(cfg.lowHz / binWidth));
-        int highBin = std::min(specSize - 1, static_cast<int>(cfg.highHz / binWidth));
-        if (highBin < lowBin) std::swap(lowBin, highBin);
-
-        float sumSq = 0.0f;
-        int count = 0;
-        for (int bin = lowBin; bin <= highBin; ++bin)
-        {
-            float mag = spectrum[static_cast<size_t>(bin)];
-            sumSq += mag * mag;
-            count++;
-        }
-        rawBand[static_cast<size_t>(i)] = count > 0 ? std::sqrt(sumSq / static_cast<float>(count)) : 0.0f;
-    }
-
-    // Peak-normalize across our 8 bands (mirrors AudioAnalyzer's approach so
-    // the loudest band lands at ~1.0 and relative balance is preserved).
-    float maxBand = *std::max_element(rawBand.begin(), rawBand.end());
-    if (maxBand > 0.0001f)
-    {
-        for (auto& b : rawBand)
-            b = std::min(1.0f, b / maxBand);
-    }
-
-    // Per-frame envelope follower (one-pole, attack/release time constants).
-    constexpr float kAttack = 0.01f;
-    constexpr float kRelease = 0.15f;
-    float dt = std::max(0.001f, deltaTime);
-    float attackCoeff = 1.0f - std::exp(-dt / kAttack);
-    float releaseCoeff = 1.0f - std::exp(-dt / kRelease);
-    for (int i = 0; i < kNumDisplayBands; ++i)
-    {
-        float target = rawBand[static_cast<size_t>(i)];
-        float& env = bandAmplitudes[static_cast<size_t>(i)];
-        env += (target > env ? attackCoeff : releaseCoeff) * (target - env);
     }
 
     overallRMS = analyzer.getRMSLevel();
@@ -159,7 +118,7 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     if (currentVibe == patch::BackgroundVibe::Doomtex && spec.doomtexAutoAdvance)
     {
         int bandIdx = juce::jlimit(0, kNumDisplayBands - 1, spec.doomtexAutoBand - 1);
-        float bandAmp = bandAmplitudes[static_cast<size_t>(bandIdx)];
+        float bandAmp = bandEnv[static_cast<size_t>(bandIdx)];
         float kHi = juce::jlimit(0.0f, 1.0f, spec.doomtexAutoThreshold);
         float kLo = std::max(0.0f, kHi - 0.1f);
         if (! doomtexAboveThreshold && bandAmp > kHi)
@@ -174,7 +133,7 @@ void Spectrum2Scene::update(DoomEngine& engine, const ParameterMap& params, floa
     }
 
     // Time advances with high-freq energy (cycle speed)
-    float highEnergy = 0.5f * (bandAmplitudes[6] + bandAmplitudes[7]);
+    float highEnergy = 0.5f * (bandEnv[6] + bandEnv[7]);
     float timeRate = 0.3f + highEnergy * 4.0f;
     time += timeRate * deltaTime;
 
@@ -204,10 +163,10 @@ void Spectrum2Scene::renderAcidwarpBackground()
     if (!paletteLoaded) return;
 
     // Audio-driven parameters
-    float a = 0.04f + bandAmplitudes[0] * 0.20f;        // sub-bass: horizontal stripe freq
-    float b = 0.05f + bandAmplitudes[1] * 0.20f;        // bass: vertical stripe freq
-    float c = 0.03f + 0.5f * (bandAmplitudes[2] + bandAmplitudes[3]) * 0.15f;  // low-mid: radial freq
-    float d = 0.04f + 0.5f * (bandAmplitudes[4] + bandAmplitudes[5]) * 0.15f;  // mid/upper-mid: diagonal freq
+    float a = 0.04f + bandEnv[0] * 0.20f;        // sub-bass: horizontal stripe freq
+    float b = 0.05f + bandEnv[1] * 0.20f;        // bass: vertical stripe freq
+    float c = 0.03f + 0.5f * (bandEnv[2] + bandEnv[3]) * 0.15f;  // low-mid: radial freq
+    float d = 0.04f + 0.5f * (bandEnv[4] + bandEnv[5]) * 0.15f;  // mid/upper-mid: diagonal freq
 
     float intensity = 0.3f + overallRMS * 4.0f;
     if (intensity > 1.5f) intensity = 1.5f;
@@ -337,7 +296,7 @@ const uint8_t* Spectrum2Scene::render(DoomEngine& engine)
 
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
-        float amp = bandAmplitudes[static_cast<size_t>(i)];
+        float amp = bandEnv[static_cast<size_t>(i)];
         float gain01 = bandGains01[static_cast<size_t>(i)];
         // Slider all the way left → no contribution → sprite hidden.
         if (gain01 < 0.001f) continue;
@@ -361,7 +320,7 @@ const uint8_t* Spectrum2Scene::render(DoomEngine& engine)
 void Spectrum2Scene::cleanup(DoomEngine& engine)
 {
     (void)engine;
-    bandAmplitudes.fill(0.0f);
+    bandEnv.reset();
 }
 
 // ===========================================================================
@@ -414,8 +373,8 @@ void Spectrum2Scene::renderBackground(patch::BackgroundVibe vibe)
 // ---------------------------------------------------------------------------
 void Spectrum2Scene::renderVaporwave()
 {
-    float band3 = bandAmplitudes[2];
-    float band4 = bandAmplitudes[3];
+    float band3 = bandEnv[2];
+    float band4 = bandEnv[3];
 
     // Bar width: 4..32 px driven by band 3.
     int barW = 4 + static_cast<int>(band3 * 28.0f);
@@ -467,7 +426,7 @@ void Spectrum2Scene::renderVaporwave()
 // ---------------------------------------------------------------------------
 void Spectrum2Scene::renderPunkrock()
 {
-    float band3 = bandAmplitudes[2];
+    float band3 = bandEnv[2];
     int cell = 6 + static_cast<int>(band3 * 22.0f);  // 6..28 px
     if (cell < 4) cell = 4;
 
@@ -595,7 +554,7 @@ void Spectrum2Scene::renderWinamp()
     // Decay peak holds.
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
-        float amp = bandAmplitudes[static_cast<size_t>(i)];
+        float amp = bandEnv[static_cast<size_t>(i)];
         float& peak = winampPeak[static_cast<size_t>(i)];
         if (amp > peak) peak = amp;
         else            peak = std::max(0.0f, peak - 0.6f * lastDelta);
@@ -613,7 +572,7 @@ void Spectrum2Scene::renderWinamp()
 
     for (int i = 0; i < kNumDisplayBands; ++i)
     {
-        float amp = bandAmplitudes[static_cast<size_t>(i)];
+        float amp = bandEnv[static_cast<size_t>(i)];
         float peak = winampPeak[static_cast<size_t>(i)];
         int barX = marginX + i * slot + (slot - barW) / 2;
         int filledH = static_cast<int>(amp * usableH);

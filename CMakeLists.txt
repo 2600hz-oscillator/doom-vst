@@ -43,6 +43,7 @@ target_sources(DoomViz PRIVATE
     src/doom/DoomEngine.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
+    src/audio/BandAnalyzer.cpp
     src/audio/MidiHandler.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
@@ -237,6 +238,7 @@ target_sources(doomviz_vrt_runner PRIVATE
     test/vrt/vrt_runner.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
+    src/audio/BandAnalyzer.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
     src/patch/VisualizerState.cpp
