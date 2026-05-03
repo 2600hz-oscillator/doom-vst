@@ -227,6 +227,46 @@ routes:
             <li><code>doom_set_god_mode</code> / <code>doom_respawn_player</code></li>
         </ul>
 
+        <h2>MIDI control</h2>
+        <p>The plugin listens on all 16 MIDI channels and dispatches different message types to two
+        independent subsystems.</p>
+
+        <h3>Visualizer scene switching (channel 1)</h3>
+        <ul>
+            <li><strong>Program Change</strong> on channel 1: PC 0 &rarr; Kill Room, PC 1 &rarr; Analyzer,
+            PC 2 &rarr; Doom Spectrum. The control window's scene-button highlight updates in sync.</li>
+            <li><strong>Other MIDI</strong> (notes, CCs, MIDI clock) is consumed by the visualizer's
+            signal bus and is available for YAML-routed effects (sector light pulsing, monster spawns,
+            etc.).</li>
+        </ul>
+
+        <h3>DooMed SFX sampler (channels 1-9)</h3>
+        <p><strong>Note:</strong> the 1.0 routing &mdash; described below &mdash; is
+        <em>channel-per-pad</em>, the SP-404 MK2 model. This requires a dedicated DAW track per pad if
+        you want per-pad notes on a single piano roll. A Blackbox-style role-based routing overhaul is
+        planned for 1.1 (single Pads channel for drum hits, separate Keys channel for chromatic
+        playback, per-pad channel override).</p>
+        <ul>
+            <li><strong>Channel N (1-9) = Pad N.</strong> NoteOn on channel 1 fires pad 1, etc.
+            Channels 10-16 are ignored by the sampler (still consumed by the visualizer's signal bus).</li>
+            <li><strong>Played note pitches the sample.</strong> Root is <strong>MIDI 60</strong>
+            (C3 / C4 depending on convention) &mdash; playing C3 plays at native speed; one octave up
+            plays at 2&times;. Pitch ratio is <code>pow(2, (note - 60) / 12)</code>. Linear-interpolated
+            varispeed; pitched playback is gritty by design (SP-404 character).</li>
+            <li><strong>Velocity &rarr; gain.</strong> Linear curve, 0-127 maps to 0-1.</li>
+            <li><strong>5 voices per pad, steal-oldest.</strong> 9 pads &times; 5 voices = 45
+            simultaneous voices cap.</li>
+            <li><strong>One-shot only.</strong> NoteOff is ignored &mdash; samples play through to
+            their (trim-marked) end. A <code>gate</code> mode is on the 1.1 backlog.</li>
+            <li><strong>Trim markers honored on each NoteOn.</strong> Drag the pad's start/end handles
+            to update the next trigger; voices already playing finish at their captured range.</li>
+            <li><strong>TRIG button</strong> on each pad fires a one-shot at root pitch (MIDI 60,
+            vel ~100) bypassing MIDI entirely &mdash; handy for previewing without a controller.</li>
+        </ul>
+        <p><strong>Bitwig setup:</strong> to address all 9 pads from a single piano roll today, you
+        need 9 instrument tracks each routed to a different MIDI channel feeding the same DoomViz
+        instance. The 1.1 routing overhaul eliminates this requirement.</p>
+
         <h2>Install</h2>
 
         <h3>macOS</h3>
