@@ -6,13 +6,21 @@
 
 namespace
 {
+    // POSIX exposes M_PI through <cmath>; MSVC requires _USE_MATH_DEFINES
+    // before <math.h>. Defining a portable constant here is simpler than
+    // guessing whether some upstream header set the flag.
+    constexpr double kPi = 3.14159265358979323846;
+}
+
+namespace
+{
     // Generates `numSamples` of a `freqHz` sine at `sampleRate` and pushes the
     // entire buffer through `analyzer` so the FFT window fills.
     void feedSine(AudioAnalyzer& analyzer, double sampleRate, double freqHz, int numSamples,
                   float amplitude = 0.5f)
     {
         std::vector<float> buf(numSamples);
-        const double w = 2.0 * M_PI * freqHz / sampleRate;
+        const double w = 2.0 * kPi * freqHz / sampleRate;
         for (int i = 0; i < numSamples; ++i)
             buf[i] = amplitude * static_cast<float>(std::sin(w * i));
         analyzer.pushSamples(buf.data(), numSamples);

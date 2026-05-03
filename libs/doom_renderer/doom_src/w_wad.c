@@ -30,11 +30,19 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #include <ctype.h>
 #include <sys/types.h>
 #include <string.h>
+#ifdef _WIN32
+// MSVC's CRT exposes open/read/lseek/close via <io.h>; <unistd.h> doesn't
+// exist on Windows.
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#ifndef O_BINARY
 #define O_BINARY		0
+#endif
 #endif
 
 #include "doomtype.h"
@@ -65,7 +73,11 @@ void**			lumpcache;
 
 #define strcmpi	strcasecmp
 
-void strupr (char* s)
+// File-local upper-casing helper. Originally named `strupr`, but Windows
+// CRT exposes a `strupr` returning `char*` via <string.h>, which conflicts
+// with this `void`-returning definition (error C2040). Rename to avoid the
+// clash; the symbol isn't used outside this file.
+static void doom_strupr (char* s)
 {
     while (*s) { *s = toupper(*s); s++; }
 }
@@ -366,7 +378,7 @@ int W_CheckNumForName (char* name)
     name8.s[8] = 0;
 
     // case insensitive
-    strupr (name8.s);		
+    doom_strupr (name8.s);		
 
     v1 = name8.x[0];
     v2 = name8.x[1];
