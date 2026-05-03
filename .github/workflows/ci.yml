@@ -262,3 +262,43 @@ jobs:
         with:
           files: ${{ runner.temp }}/DoomViz-${{ github.ref_name }}-linux-x86_64.tar.gz
           fail_on_unmatched_files: true
+
+  # Tag-triggered Windows release: builds the Windows VST3, zips the bundle,
+  # attaches it to the same GitHub Release as the macOS + Linux artifacts.
+  # Authenticode signing is deferred (Windows plan Phase 4); end users see a
+  # one-time SmartScreen warning on first DAW load until that lands.
+  release-windows:
+    name: Publish (Windows x64 tagged release)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Configure (Visual Studio 17 2022, x64)
+        run: cmake -B build-win -G "Visual Studio 17 2022" -A x64
+
+      - name: Build VST3
+        run: cmake --build build-win --config Release --parallel --target DoomViz_VST3
+
+      - name: Package VST3 for release
+        # PowerShell on windows-latest. Compress-Archive zips the .vst3
+        # folder bundle so the user gets a single .zip to download.
+        shell: pwsh
+        run: |
+          $src  = "build-win/DoomViz_artefacts/Release/VST3/DoomViz.vst3"
+          $dest = "$env:RUNNER_TEMP/DoomViz-${{ github.ref_name }}-windows-x64.zip"
+          Compress-Archive -Path $src -DestinationPath $dest -Force
+
+      - name: Attach Windows artifact to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ runner.temp }}/DoomViz-${{ github.ref_name }}-windows-x64.zip
+          fail_on_unmatched_files: true
