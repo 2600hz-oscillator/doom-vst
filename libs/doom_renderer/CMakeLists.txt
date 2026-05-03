@@ -44,19 +44,28 @@ set_target_properties(doom_renderer PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
-# Suppress warnings from vintage 1997 C code
-target_compile_options(doom_renderer PRIVATE
-    -Wno-implicit-function-declaration
-    -Wno-implicit-int
-    -Wno-int-conversion
-    -Wno-pointer-sign
-    -Wno-unused-result
-    -Wno-format
-    -Wno-incompatible-pointer-types
-    -Wno-parentheses
-    -Wno-unused-variable
-    -Wno-missing-braces
-)
+# Suppress warnings from vintage 1997 C code. The flags are GNU/Clang style;
+# MSVC's cl.exe rejects them with D8021. MSVC's default /W3 is lenient
+# enough that this code compiles without explicit suppressions there — if
+# specific /wd<N> codes turn out to be needed later, add them under the
+# else() branch.
+if(NOT MSVC)
+    target_compile_options(doom_renderer PRIVATE
+        -Wno-implicit-function-declaration
+        -Wno-implicit-int
+        -Wno-int-conversion
+        -Wno-pointer-sign
+        -Wno-unused-result
+        -Wno-format
+        -Wno-incompatible-pointer-types
+        -Wno-parentheses
+        -Wno-unused-variable
+        -Wno-missing-braces
+    )
+endif()
 
-# Link math library
-target_link_libraries(doom_renderer PRIVATE m)
+# Link math library. Windows' MSVC links libm implicitly via the CRT;
+# only Unix-style toolchains need an explicit -lm.
+if(NOT MSVC)
+    target_link_libraries(doom_renderer PRIVATE m)
+endif()
