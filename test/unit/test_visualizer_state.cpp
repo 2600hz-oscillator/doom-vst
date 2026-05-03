@@ -120,3 +120,64 @@ TEST_CASE("VisualizerState: malformed XML is ignored, store stays usable",
     auto g = state.getGlobal();
     REQUIRE(g.bands.size() == patch::kNumBands);
 }
+
+TEST_CASE("VisualizerState: sampler defaults are 9 empty pads",
+          "[viz_state][sampler]")
+{
+    patch::VisualizerState state;
+    auto sm = state.getSampler();
+    REQUIRE(sm.pads.size() == static_cast<size_t>(patch::kNumPads));
+    for (const auto& p : sm.pads)
+    {
+        REQUIRE(p.name.isEmpty());
+        REQUIRE(p.sampleData.empty());
+        REQUIRE(p.startSample == 0);
+        REQUIRE(p.endSample   == 0);
+    }
+}
+
+TEST_CASE("VisualizerState: sampler XML round-trip preserves pad metadata + sample data",
+          "[viz_state][sampler]")
+{
+    patch::VisualizerState a;
+    auto sm = patch::SamplerConfig::makeDefault();
+
+    // Pad 0: a small ramp. Round-trips through 16-bit PCM, so allow a
+    // tiny quantization error (1 LSB at 16-bit ~ 3e-5).
+    sm.pads[0].name             = "DSPISTOL.wav";
+    sm.pads[0].sourceSampleRate = 44100.0;
+    sm.pads[0].startSample      = 0;
+    sm.pads[0].endSample        = 8;
+    sm.pads[0].sampleData       = { 0.0f, 0.25f, 0.5f, 0.75f, -0.25f, -0.5f, -0.75f, 1.0f };
+
+    // Pad 4: name + markers but no sample data (e.g. metadata stub).
+    sm.pads[4].name        = "empty.wav";
+    sm.pads[4].endSample   = 0;
+
+    a.setSampler(sm);
+
+    juce::String xml = a.toXmlString();
+    REQUIRE_FALSE(xml.isEmpty());
+
+    patch::VisualizerState b;
+    b.fromXmlString(xml);
+    auto smr = b.getSampler();
+
+    REQUIRE(smr.pads[0].name             == juce::String("DSPISTOL.wav"));
+    REQUIRE(smr.pads[0].sourceSampleRate == 44100.0);
+    REQUIRE(smr.pads[0].startSample      == 0);
+    REQUIRE(smr.pads[0].endSample        == 8);
+    REQUIRE(smr.pads[0].sampleData.size() == 8);
+
+    const std::vector<float> expected =
+        { 0.0f, 0.25f, 0.5f, 0.75f, -0.25f, -0.5f, -0.75f, 1.0f };
+    for (size_t i = 0; i < expected.size(); ++i)
+        REQUIRE(std::abs(smr.pads[0].sampleData[i] - expected[i]) < 1.0e-4f);
+
+    REQUIRE(smr.pads[4].name == juce::String("empty.wav"));
+    REQUIRE(smr.pads[4].sampleData.empty());
+
+    // Pads we never touched stay default-empty after the round-trip.
+    REQUIRE(smr.pads[7].name.isEmpty());
+    REQUIRE(smr.pads[7].sampleData.empty());
+}

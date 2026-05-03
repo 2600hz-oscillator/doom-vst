@@ -45,6 +45,7 @@ target_sources(DoomViz PRIVATE
     src/audio/AudioAnalyzer.cpp
     src/audio/BandAnalyzer.cpp
     src/audio/MidiHandler.cpp
+    src/audio/SamplerEngine.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
     src/scenes/SceneManager.cpp
@@ -203,6 +204,7 @@ target_sources(doomviz_integration_tests PRIVATE
     src/PluginProcessor.cpp
     src/audio/SignalBus.cpp
     src/audio/MidiHandler.cpp
+    src/audio/SamplerEngine.cpp
     src/patch/VisualizerState.cpp
 )
 

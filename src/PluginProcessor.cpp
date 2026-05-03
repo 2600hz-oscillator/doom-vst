@@ -17,6 +17,7 @@ void DoomVizProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
     monoBuffer.resize(static_cast<size_t>(samplesPerBlock), 0.0f);
+    samplerEngine.prepare(sampleRate);
 }
 
 void DoomVizProcessor::releaseResources()
@@ -66,7 +67,8 @@ void DoomVizProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     // Parse MIDI events
     midiHandler.processMidiBuffer(midiMessages);
 
-    // Audio passes through unchanged
+    // Mix sampler voices on top of the input passthrough.
+    samplerEngine.render(buffer, numSamples);
 }
 
 #ifndef DOOMVIZ_TEST_BUILD

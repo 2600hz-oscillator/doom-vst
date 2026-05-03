@@ -1,7 +1,45 @@
 #include "VisualizerState.h"
 
+#include <juce_core/juce_core.h>
+#include <algorithm>
+#include <cmath>
+
 namespace patch
 {
+
+namespace
+{
+    // Float buffer ↔ base64-encoded 16-bit signed little-endian PCM.
+    // 16-bit is plenty for sampler audio and halves the XML state size
+    // vs. raw 32-bit floats.
+    juce::String encodeSamplePCM(const std::vector<float>& samples)
+    {
+        if (samples.empty()) return {};
+        juce::MemoryBlock pcm;
+        pcm.setSize(samples.size() * sizeof(int16_t));
+        auto* dst = static_cast<int16_t*>(pcm.getData());
+        for (size_t i = 0; i < samples.size(); ++i)
+        {
+            float s = juce::jlimit(-1.0f, 1.0f, samples[i]);
+            dst[i] = static_cast<int16_t>(std::lround(s * 32767.0f));
+        }
+        return pcm.toBase64Encoding();
+    }
+
+    std::vector<float> decodeSamplePCM(const juce::String& base64)
+    {
+        if (base64.isEmpty()) return {};
+        juce::MemoryBlock pcm;
+        if (! pcm.fromBase64Encoding(base64)) return {};
+        const size_t n = pcm.getSize() / sizeof(int16_t);
+        const auto* src = static_cast<const int16_t*>(pcm.getData());
+        std::vector<float> out(n);
+        for (size_t i = 0; i < n; ++i)
+            out[i] = static_cast<float>(src[i]) / 32767.0f;
+        return out;
+    }
+}
+
 
 VisualizerState::VisualizerState() = default;
 
@@ -53,10 +91,23 @@ void VisualizerState::setAnalyzer(const AnalyzerConfig& a)
     analyzer = a;
 }
 
+SamplerConfig VisualizerState::getSampler() const
+{
+    const juce::SpinLock::ScopedLockType l(lock);
+    return sampler;
+}
+
+void VisualizerState::setSampler(const SamplerConfig& s)
+{
+    const juce::SpinLock::ScopedLockType l(lock);
+    sampler = s;
+}
+
 juce::String VisualizerState::toXmlString() const
 {
     GlobalConfig   g = getGlobal();
     SpectrumConfig s = getSpectrum();
+    SamplerConfig  sm = getSampler();
 
     juce::XmlElement root("DoomVizState");
 
@@ -82,6 +133,22 @@ juce::String VisualizerState::toXmlString() const
     root.createNewChildElement("KillRoom");
     root.createNewChildElement("Analyzer");
 
+    auto* samplerXml = root.createNewChildElement("Sampler");
+    for (int i = 0; i < kNumPads; ++i)
+    {
+        const auto& pad = sm.pads[i];
+        auto* padXml = samplerXml->createNewChildElement("Pad");
+        padXml->setAttribute("index",            i);
+        padXml->setAttribute("name",             pad.name);
+        padXml->setAttribute("sourceSampleRate", pad.sourceSampleRate);
+        padXml->setAttribute("startSample",      pad.startSample);
+        padXml->setAttribute("endSample",        pad.endSample);
+
+        auto* pcmXml = padXml->createNewChildElement("SamplePCM");
+        if (! pad.sampleData.empty())
+            pcmXml->addTextElement(encodeSamplePCM(pad.sampleData));
+    }
+
     return root.toString();
 }
 
@@ -90,8 +157,9 @@ void VisualizerState::fromXmlString(const juce::String& xmlString)
     auto xml = juce::XmlDocument::parse(xmlString);
     if (xml == nullptr) return;
 
-    GlobalConfig   g = GlobalConfig::makeDefault();
-    SpectrumConfig s = SpectrumConfig::makeDefault();
+    GlobalConfig   g  = GlobalConfig::makeDefault();
+    SpectrumConfig s  = SpectrumConfig::makeDefault();
+    SamplerConfig  sm = SamplerConfig::makeDefault();
 
     // Accept both the new schema (DoomVizState) and the legacy schema
     // (DoomVizPatches with bands inside <Spectrum>) so projects saved
@@ -138,6 +206,22 @@ void VisualizerState::fromXmlString(const juce::String& xmlString)
                 s.vibe = static_cast<BackgroundVibe>(v);
             readSpectrumExtras(specXml);
         }
+        if (auto* samplerXml = root->getChildByName("Sampler"))
+        {
+            for (auto* p : samplerXml->getChildIterator())
+            {
+                if (! p->hasTagName("Pad")) continue;
+                int idx = p->getIntAttribute("index", -1);
+                if (idx < 0 || idx >= kNumPads) continue;
+                auto& pad = sm.pads[idx];
+                pad.name             = p->getStringAttribute("name", pad.name);
+                pad.sourceSampleRate = p->getDoubleAttribute("sourceSampleRate", pad.sourceSampleRate);
+                pad.startSample      = p->getIntAttribute("startSample", pad.startSample);
+                pad.endSample        = p->getIntAttribute("endSample",   pad.endSample);
+                if (auto* pcmXml = p->getChildByName("SamplePCM"))
+                    pad.sampleData = decodeSamplePCM(pcmXml->getAllSubText().trim());
+            }
+        }
     }
     else // legacy DoomVizPatches: bands lived inside <Spectrum>
     {
@@ -152,6 +236,7 @@ void VisualizerState::fromXmlString(const juce::String& xmlString)
 
     setGlobal(g);
     setSpectrum(s);
+    setSampler(sm);
 }
 
 } // namespace patch
