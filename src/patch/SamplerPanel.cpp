@@ -1,4 +1,5 @@
 #include "SamplerPanel.h"
+#include "SampleSetIO.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,9 +9,11 @@ namespace patch
 
 namespace
 {
-    constexpr auto kStoneDark = juce::uint32 { 0xff2a1f15 };
-    constexpr auto kBevelHi   = juce::uint32 { 0xffc8b070 };
-    constexpr auto kDimGold   = juce::uint32 { 0xff786850 };
+    constexpr auto kStoneDark  = juce::uint32 { 0xff2a1f15 };
+    constexpr auto kStoneLight = juce::uint32 { 0xff3a2f25 };
+    constexpr auto kBevelHi    = juce::uint32 { 0xffc8b070 };
+    constexpr auto kDimGold    = juce::uint32 { 0xff786850 };
+    constexpr auto kGoldText   = juce::uint32 { 0xfff0d878 };
 
     // Cap a pad at 30 sec. Plan calls this out as a v1 safeguard so an
     // accidental 30-min WAV doesn't blow up project state.
@@ -86,6 +89,18 @@ SamplerPanel::SamplerPanel(VisualizerState& s,
                  juce::dontSendNotification);
     addAndMakeVisible(hint);
 
+    auto styleSetButton = [](juce::TextButton& btn)
+    {
+        btn.setColour(juce::TextButton::buttonColourId,    juce::Colour(kStoneLight));
+        btn.setColour(juce::TextButton::textColourOffId,   juce::Colour(kGoldText));
+    };
+    styleSetButton(saveSetBtn);
+    styleSetButton(loadSetBtn);
+    saveSetBtn.onClick = [this]() { handleSaveSet(); };
+    loadSetBtn.onClick = [this]() { handleLoadSet(); };
+    addAndMakeVisible(saveSetBtn);
+    addAndMakeVisible(loadSetBtn);
+
     for (int i = 0; i < kNumPads; ++i)
     {
         cells[i].onLoadClicked    = [this, i]() { handleLoadPad(i); };
@@ -114,6 +129,14 @@ void SamplerPanel::resized()
     header.setBounds(b.removeFromTop(20));
     b.removeFromTop(2);
     hint  .setBounds(b.removeFromTop(16));
+    b.removeFromTop(6);
+
+    // SAVE SET / LOAD SET row above the pad grid.
+    auto setRow = b.removeFromTop(22);
+    const int half = setRow.getWidth() / 2;
+    saveSetBtn.setBounds(setRow.removeFromLeft(half - 2));
+    setRow.removeFromLeft(4);
+    loadSetBtn.setBounds(setRow);
     b.removeFromTop(8);
 
     const int rows = 3;
@@ -183,6 +206,76 @@ void SamplerPanel::commitPad(int padIndex, juce::String name,
 
     state.setSampler(cfg);
     cells[padIndex].setPad(pad);
+}
+
+void SamplerPanel::handleSaveSet()
+{
+    auto initialDir = userSetsDir();
+    initialDir.createDirectory();   // ensure ~/Documents/DoomViz Sets exists
+
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Save Sample Set",
+        initialDir.getChildFile("Untitled.dvset"),
+        "*.dvset",
+        true);
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
+                              | juce::FileBrowserComponent::canSelectFiles
+                              | juce::FileBrowserComponent::warnAboutOverwriting,
+        [this](const juce::FileChooser& fc)
+    {
+        auto file = fc.getResult();
+        if (file == juce::File{}) return;
+        if (file.getFileExtension().isEmpty())
+            file = file.withFileExtension(".dvset");
+
+        SampleSetIO::saveToFile(state.getSampler(), file);
+    });
+}
+
+void SamplerPanel::handleLoadSet()
+{
+    auto initialDir = userSetsDir();
+    if (! initialDir.isDirectory())
+    {
+        // Fall back to the bundled sets directory if the user hasn't
+        // saved anything yet.
+        auto thisModule = juce::File::getSpecialLocation(
+            juce::File::currentExecutableFile);
+        auto bundleSets = thisModule.getParentDirectory()
+                                    .getParentDirectory()
+                                    .getParentDirectory()
+                                    .getChildFile("Contents/Resources/sets");
+        if (bundleSets.isDirectory()) initialDir = bundleSets;
+        else initialDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+    }
+
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Load Sample Set",
+        initialDir,
+        "*.dvset",
+        true);
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::openMode
+                              | juce::FileBrowserComponent::canSelectFiles,
+        [this](const juce::FileChooser& fc)
+    {
+        const auto file = fc.getResult();
+        if (file == juce::File{}) return;
+
+        const double hostSr = getHostSampleRate ? getHostSampleRate() : 44100.0;
+        if (auto loaded = SampleSetIO::loadFromFile(file, hostSr))
+        {
+            state.setSampler(*loaded);
+            loadFromState(*loaded);
+        }
+    });
+}
+
+juce::File SamplerPanel::userSetsDir()
+{
+    return juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+               .getChildFile("DoomViz Sets");
 }
 
 juce::File SamplerPanel::findBundledSoundsDir()

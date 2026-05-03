@@ -11,28 +11,31 @@ namespace
 {
     // Float buffer ↔ base64-encoded 16-bit signed little-endian PCM.
     // 16-bit is plenty for sampler audio and halves the XML state size
-    // vs. raw 32-bit floats.
+    // vs. raw 32-bit floats. Uses standard RFC 4648 base64 (juce::Base64),
+    // NOT MemoryBlock::toBase64Encoding (which is a JUCE-custom BigInteger
+    // format incompatible with external tools / Python's base64 module).
     juce::String encodeSamplePCM(const std::vector<float>& samples)
     {
         if (samples.empty()) return {};
-        juce::MemoryBlock pcm;
-        pcm.setSize(samples.size() * sizeof(int16_t));
-        auto* dst = static_cast<int16_t*>(pcm.getData());
+        std::vector<int16_t> pcm(samples.size());
         for (size_t i = 0; i < samples.size(); ++i)
         {
             float s = juce::jlimit(-1.0f, 1.0f, samples[i]);
-            dst[i] = static_cast<int16_t>(std::lround(s * 32767.0f));
+            pcm[i] = static_cast<int16_t>(std::lround(s * 32767.0f));
         }
-        return pcm.toBase64Encoding();
+        juce::MemoryOutputStream mo;
+        juce::Base64::convertToBase64(mo, pcm.data(),
+                                       pcm.size() * sizeof(int16_t));
+        return mo.toString();
     }
 
     std::vector<float> decodeSamplePCM(const juce::String& base64)
     {
         if (base64.isEmpty()) return {};
-        juce::MemoryBlock pcm;
-        if (! pcm.fromBase64Encoding(base64)) return {};
-        const size_t n = pcm.getSize() / sizeof(int16_t);
-        const auto* src = static_cast<const int16_t*>(pcm.getData());
+        juce::MemoryOutputStream mo;
+        if (! juce::Base64::convertFromBase64(mo, base64)) return {};
+        const auto* src = static_cast<const int16_t*>(mo.getData());
+        const size_t n  = mo.getDataSize() / sizeof(int16_t);
         std::vector<float> out(n);
         for (size_t i = 0; i < n; ++i)
             out[i] = static_cast<float>(src[i]) / 32767.0f;

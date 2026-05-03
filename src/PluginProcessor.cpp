@@ -1,7 +1,37 @@
 #include "PluginProcessor.h"
+#include "patch/SampleSetIO.h"
 #ifndef DOOMVIZ_TEST_BUILD
 #include "PluginEditor.h"
 #endif
+
+namespace
+{
+    // Mirrors DoomViewport::findWadPath — locate the bundled
+    // Contents/Resources/sets/default.dvset whether we're running
+    // inside a VST3 bundle, alongside it, or in the dev-tree CWD.
+    juce::File findBundledDefaultSet()
+    {
+        auto thisModule = juce::File::getSpecialLocation(
+            juce::File::currentExecutableFile);
+        auto bundleRoot = thisModule.getParentDirectory()
+                                    .getParentDirectory()
+                                    .getParentDirectory();
+
+        const juce::String rel = "Contents/Resources/sets/default.dvset";
+        auto bundled = bundleRoot.getChildFile(rel);
+        if (bundled.existsAsFile()) return bundled;
+
+        auto nextToBundle = bundleRoot.getParentDirectory()
+                                       .getChildFile("default.dvset");
+        if (nextToBundle.existsAsFile()) return nextToBundle;
+
+        auto devPath = juce::File::getCurrentWorkingDirectory()
+                           .getChildFile("resources/sets/default.dvset");
+        if (devPath.existsAsFile()) return devPath;
+
+        return {};
+    }
+}
 
 DoomVizProcessor::DoomVizProcessor()
     : AudioProcessor(BusesProperties()
@@ -18,6 +48,30 @@ void DoomVizProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     currentSampleRate = sampleRate;
     monoBuffer.resize(static_cast<size_t>(samplesPerBlock), 0.0f);
     samplerEngine.prepare(sampleRate, samplesPerBlock);
+
+    // Auto-load the bundled default kit on the *first* prepareToPlay so a
+    // fresh DAW instance comes up ready to play. The host calls
+    // setStateInformation before prepareToPlay when restoring a project
+    // — if any pad has sample data at this point, the user has saved
+    // state and we leave it alone. The flag ensures we only attempt
+    // once: a user who deliberately empties all pads + saves keeps that
+    // state on subsequent loads.
+    if (! defaultKitAttempted)
+    {
+        defaultKitAttempted = true;
+        const auto live = visualizerState.getSampler();
+        const bool anyLoaded = std::any_of(live.pads.begin(), live.pads.end(),
+            [](const auto& p) { return ! p.sampleData.empty(); });
+        if (! anyLoaded)
+        {
+            auto setFile = findBundledDefaultSet();
+            if (setFile != juce::File{})
+            {
+                if (auto loaded = patch::SampleSetIO::loadFromFile(setFile, sampleRate))
+                    visualizerState.setSampler(*loaded);
+            }
+        }
+    }
 }
 
 void DoomVizProcessor::releaseResources()

@@ -106,66 +106,81 @@
 <body>
     <div class="container">
         <h1>DOOMVIZ</h1>
-        <p class="subtitle">A VST3 / AU music visualizer driving the Doom (1994) renderer</p>
+        <p class="subtitle">A spectral music-visualization framework + 9-pad sample player driving the Doom (1994) renderer</p>
 
         <h2>What it is</h2>
-        <p>Drop DoomViz on a track. Your music animates E1M1. Audio passes through unchanged &mdash;
-        the plugin is purely visual. A floating control window switches scenes without covering the
-        renderer, so you can put the visual on a separate display.</p>
+        <p>DoomViz is a VST3 / AU plugin in two halves that share a control window:</p>
+        <ul>
+            <li><strong>DooMed VFX</strong> &mdash; a spectral visualizer. Eight user-defined frequency
+            bands (low/high Hz, gain, sprite) feed a growing list of Doom-engine presets. The presets
+            render into the same 320&times;200 indexed framebuffer; you switch between them with
+            scene buttons or MIDI Program Change.</li>
+            <li><strong>DooMed SFX</strong> &mdash; a 9-pad sample player. Drop WAVs onto pads, drag
+            trim handles, fire one-shots from the cell or via MIDI. A default Doom shareware kit auto-
+            loads on a fresh instance. Sample audio mixes on top of the input passthrough so DAW track
+            audio and pad audio share the visualizer.</li>
+        </ul>
+        <p>The control window is a separate floating window so you can keep the renderer fullscreen on
+        a second display.</p>
 
-        <h2>Scenes</h2>
+        <h2>Visualization presets</h2>
         <div class="scene-grid">
             <div class="scene-card">
                 <span class="tag">PC 0</span>
                 <img src="images/e1m1_test.png" alt="Kill Room">
                 <h3>Kill Room</h3>
-                <p>Walks E1M1 with the shotgun. Audio onsets spawn monsters in front of the player.
-                Auto-fires at nearby enemies while audio is playing. Sector lighting pulses with RMS.
-                God mode, infinite ammo, monsters are non-solid.</p>
+                <p>Auto-walks E1M1 with the shotgun. Each user band fires its assigned sprite as a
+                Doom mobj when the band's envelope crosses a rising-edge threshold (with hysteresis +
+                per-band cooldown). Characters spawn as monsters, powerups and armor as pickups, gun
+                sprites are skipped. Sector lighting pulses with overall RMS. God mode, infinite ammo,
+                monsters non-solid.</p>
             </div>
             <div class="scene-card">
                 <span class="tag">PC 1</span>
                 <img src="images/analyzer_scene.png" alt="Analyzer">
                 <h3>Analyzer</h3>
-                <p>Walks E1M1 with the BFG9000. Eight audio bands are injected as colored bars onto
-                the <code>STARTAN3</code> wall texture in real time. Player movement speed tracks
-                the sub-bass band &mdash; bass moves you, silence stops you.</p>
+                <p>Auto-walks E1M1 with the BFG9000. The 8 user-configured bands are injected as
+                colored bars onto the <code>STARTAN3</code> wall texture in real time. Player movement
+                speed tracks band 1 (sub-bass) &mdash; bass moves you, silence stops you.</p>
             </div>
             <div class="scene-card">
                 <span class="tag">PC 2</span>
                 <img src="images/doom_spectrum_scene.png" alt="Doom Spectrum">
                 <h3>Doom Spectrum</h3>
-                <p>2D mode. Audio-driven background behind eight Doom sprites whose size scales with
-                per-band audio. Band frequencies, per-band sprite, per-band gain, and the background
-                pattern itself are all editable from the Patch Settings window.</p>
+                <p>2D mode. An audio-driven background renders behind eight Doom sprites (one per
+                band) whose size scales with <code>bandAmplitude &times; (gain &times; 4.0)</code>.
+                Background is a selectable Background Vibe (acidwarp, vaporwave, punkrock, doomtex,
+                winamp, starfield, crtglitch).</p>
             </div>
         </div>
-        <p>Switch scenes via the floating control window or MIDI Program Change. Each switch reloads
-        the map for full state isolation &mdash; no state bleeds between scenes.</p>
+        <p>Switch presets via the control window's <strong>SCENE</strong> buttons or MIDI Program
+        Change (PC 0/1/2). User-band configuration persists across switches &mdash; no reset,
+        no flash, no map reload.</p>
         <p><a href="vrt/">Browse the VRT baseline gallery &rarr;</a> &mdash; per-frame snapshots from
-        each scene that the visual regression suite asserts against on every commit.</p>
+        each preset that the visual regression suite asserts against on every commit.</p>
 
-        <h2>Doom Spectrum: patch settings</h2>
-        <p>Click <strong>Patch Settings</strong> on the floating control panel to open the editor for the
-        active scene. Edits stage in the UI &mdash; only the <strong>Apply</strong> button (lower-right)
-        commits them to the renderer. Switching scenes silently reverts pending edits. State persists
-        with the DAW project.</p>
+        <h2>Control window: DOOMED VFX tab</h2>
+        <p>A floating window with two top-level tabs: <strong>DOOMED VFX</strong> (spectral
+        visualizer controls) and <strong>DOOMED SFX</strong> (9-pad sampler). Switching tabs
+        silently reverts any unsaved edits.</p>
 
-        <h3>Per-band controls (8 rows)</h3>
+        <h3>GLOBAL band rows (8)</h3>
+        <p>Shared across every preset. Edits stage in the UI; <strong>APPLY</strong> commits to the
+        live renderer, <strong>REVERT</strong> discards. State persists across MIDI scene switches,
+        plugin window opens/closes, and DAW project save/restore.</p>
         <ul>
             <li><strong>Low Hz</strong> / <strong>High Hz</strong> &mdash; the band's frequency range.
-            Pulled directly from the FFT magnitude spectrum, so bands may overlap, leave gaps, or be
+            Pulled directly from the FFT magnitude spectrum; bands may overlap, leave gaps, or be
             reordered.</li>
             <li><strong>Gain</strong> &mdash; 0..1 slider. Sprite scale =
-            <code>bandAmplitude &times; (gain &times; 4.0)</code>. Slider all the way left hides
-            the sprite for that band.</li>
-            <li><strong>Sprite</strong> &mdash; dropdown of every sprite present in the shareware WAD,
-            grouped into <em>Characters</em> / <em>Guns</em> / <em>Powerups</em> / <em>Armor</em>.
-            Defaults: Marine (bands 1&ndash;2), Imp (3&ndash;6), Zombieman (7), Shotgun Guy (8).</li>
+            <code>bandAmplitude &times; (gain &times; 4.0)</code>. All the way left hides the sprite.</li>
+            <li><strong>Sprite</strong> &mdash; dropdown of every sprite in the shareware WAD,
+            grouped into <em>Characters</em> / <em>Guns</em> / <em>Powerups</em> / <em>Armor</em>.</li>
         </ul>
 
-        <h3>Background vibes</h3>
-        <p>The <strong>Background Vibe</strong> dropdown switches the backdrop pattern:</p>
+        <h3>Doom Spectrum: background vibes</h3>
+        <p>When the active preset is Doom Spectrum, the per-preset section below the band rows
+        exposes a <strong>Background Vibe</strong> dropdown:</p>
         <ul>
             <li><strong>ACIDWARP.EXE</strong> &mdash; layered sin/cos warp; band envelopes drive zoom,
             swirl rate, color shift, and intensity. Onsets jolt the palette.</li>
@@ -185,6 +200,29 @@
             aberration; onsets trigger flashes.</li>
         </ul>
 
+        <h2>Control window: DOOMED SFX tab</h2>
+        <p>A 9-pad sample player. A default Doom-shareware kit auto-loads on a fresh plugin instance
+        (pistol, barrel/rocket explosion, doors, oof, item chime, claw, fireball, player death). Sample
+        audio mixes on top of the input passthrough &mdash; DAW track audio and pad audio share the
+        visualizer FFT.</p>
+        <h3>Per-pad cell</h3>
+        <ul>
+            <li><strong>LOAD</strong> &mdash; opens a file chooser defaulted to the bundled
+            <code>Contents/Resources/sounds/</code> (55 extracted Doom WAVs). Picked file is decoded,
+            mono-downmixed, and resampled to the host SR (capped at 30 sec / pad).</li>
+            <li><strong>TRIG</strong> &mdash; one-shot preview at root pitch (MIDI 60). Lock-free
+            atomic preview-request bitmask; safe to click while audio is rendering.</li>
+            <li><strong>Waveform</strong> &mdash; min/max-per-pixel envelope of the loaded sample
+            with two draggable handles for start (gold) and end (red) markers. The trim region
+            outside is darkened. Drag updates take effect on the next NoteOn.</li>
+        </ul>
+        <h3>Sample sets</h3>
+        <p>The whole 9-pad config (samples + names + trim markers) saves as a self-contained
+        <code>.dvset</code> XML file via <strong>SAVE SET</strong>. <strong>LOAD SET</strong>
+        reads any <code>.dvset</code> back; samples resample to the current host SR on load, so
+        a kit authored at 11 kHz works in a 48 kHz session. SAVE defaults to
+        <code>~/Documents/DoomViz Sets/</code>; LOAD initially points at the bundled sets folder.</p>
+
         <h2>Signal flow</h2>
         <div class="arch-diagram">Audio In &rarr; FFT / RMS / Onset &rarr; Signal Router &rarr; Scene &rarr; Doom renderer &rarr; OpenGL
 MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                                              &darr;
@@ -192,10 +230,13 @@ MIDI In  &rarr; Note / CC / PC   &rarr;       &uarr;                            
 
         <h2>Audio analysis</h2>
         <ul>
-            <li><strong>FFT</strong> &mdash; 2048-sample Hann window, 16 log-spaced bands (20Hz&ndash;20kHz)</li>
-            <li><strong>RMS</strong> &mdash; time-domain, with per-band envelope follower</li>
-            <li><strong>Onsets</strong> &mdash; spectral flux transient detection</li>
-            <li><strong>MIDI</strong> &mdash; note velocity, 128 CCs, program change, MIDI clock</li>
+            <li><strong>FFT</strong> &mdash; 2048-sample Hann window, magnitude spectrum sliced into
+            the user's 8 bands at frame time (per <code>BandAnalyzer</code>).</li>
+            <li><strong>Per-band envelope</strong> &mdash; one-pole follower (10 ms attack /
+            150 ms release) shared by all three presets.</li>
+            <li><strong>RMS</strong> &mdash; time-domain, with overall envelope follower.</li>
+            <li><strong>Onsets</strong> &mdash; spectral flux transient detection.</li>
+            <li><strong>MIDI</strong> &mdash; note velocity, 128 CCs, program change, MIDI clock.</li>
         </ul>
         <p>Audio thread to render thread is lock-free via <code>juce::AbstractFifo</code> ring buffer
         and atomic MIDI state.</p>
@@ -303,11 +344,13 @@ sudo tar xzf DoomViz-v0.4.0-linux-x86_64.tar.gz -C /usr/lib/vst3/</pre>
         loads silently every subsequent run.</p>
 
         <h2>Building</h2>
-        <p>All builds run inside <a href="https://flox.dev/">Flox</a>, which manages cmake / ninja /
-        git-lfs / python deps. The only host requirement is the platform compiler:</p>
+        <p>macOS and Linux builds run inside <a href="https://flox.dev/">Flox</a>, which manages
+        cmake / ninja / git-lfs / python deps. Windows uses native VS 2022 (no flox there). Host
+        requirements:</p>
         <ul>
             <li><strong>macOS</strong>: Apple Clang via Xcode Command Line Tools (<code>xcode-select --install</code>)</li>
-            <li><strong>Linux</strong>: nothing extra; flox provides everything</li>
+            <li><strong>Linux</strong>: flox handles everything</li>
+            <li><strong>Windows</strong>: Visual Studio 2022 Build Tools + Git Bash</li>
         </ul>
         <p>Build via <a href="https://taskfile.dev/">Task</a> (also installed by flox):</p>
 <pre>git clone --recursive &lt;repo&gt;
@@ -325,7 +368,7 @@ task --list        # see all tasks</pre>
 
         <h2>Stack</h2>
         <ul>
-            <li><strong>Renderer</strong> &mdash; stripped <a href="https://github.com/id-Software/DOOM">linuxdoom-1.10</a>, ported to 64-bit macOS</li>
+            <li><strong>Renderer</strong> &mdash; stripped <a href="https://github.com/id-Software/DOOM">linuxdoom-1.10</a>, built for macOS arm64, Linux x86_64, and Windows x64</li>
             <li><strong>Plugin framework</strong> &mdash; <a href="https://juce.com/">JUCE</a> (VST3, AU, Standalone)</li>
             <li><strong>Config</strong> &mdash; <a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></li>
             <li><strong>Display</strong> &mdash; 320&times;200 indexed framebuffer &rarr; RGBA &rarr; OpenGL texture (nearest-neighbor)</li>
