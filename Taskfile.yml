@@ -72,7 +72,7 @@ tasks:
       - echo "Built {{.DIST_DIR}}/{{.VST3_NAME}}"
 
   build-mac-unsigned:
-    desc: Build the macOS VST3 without code-signing (CI / local dev without a Developer ID cert). Leaves dist/ alone.
+    desc: Build the macOS VST3 without code-signing (CI / local dev without a Developer ID cert). Doesn't write to dist/.
     deps: [configure]
     preconditions:
       - sh: "[ \"$(uname)\" = \"Darwin\" ]"
@@ -82,10 +82,10 @@ tasks:
     cmds:
       - cmake --build {{.BUILD_DIR}} -j$(sysctl -n hw.ncpu) --target DoomViz_VST3
       - echo "Built (unsigned) {{.BUILD_DIR}}/DoomViz_artefacts/VST3/{{.VST3_NAME}}"
-      - echo "(dist/ left untouched — committed there is the signed + notarized release artifact)"
+      - echo "(dist/ untouched — used by 'task build-mac' as the local install staging dir)"
 
   build-linux:
-    desc: Build all Linux targets (VST3 + tests). Runs natively on Linux, else prints flox-containerize instructions. Leaves dist/ alone — that path holds the committed macOS signed binary.
+    desc: Build all Linux targets (VST3 + tests). Runs natively on Linux, else prints flox-containerize instructions. Doesn't write to dist/ (that's the macOS local install staging dir).
     cmds:
       - |
         if [ "$(uname)" = "Linux" ]; then
@@ -100,7 +100,7 @@ tasks:
           cmake --build . -j$(nproc) --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
           cd ..
           echo "Built {{.BUILD_DIR}}-linux/DoomViz_artefacts/VST3/{{.VST3_NAME}}"
-          echo "(dist/ left untouched — that's the committed macOS signed binary)"
+          echo "(dist/ untouched — that's the macOS local install staging dir)"
         else
           echo "Cross-platform Linux builds use 'flox containerize' + container runtime."
           echo "To build a Linux VST3 from macOS:"
@@ -110,7 +110,7 @@ tasks:
         fi
 
   build-win:
-    desc: Build all Windows targets (VST3 + tests). Runs natively on a Windows host with Visual Studio 2022 (via Git Bash). On other hosts, prints CI / Windows-host instructions. Leaves dist/ alone.
+    desc: Build all Windows targets (VST3 + tests). Runs natively on a Windows host with Visual Studio 2022 (via Git Bash). On other hosts, prints CI / Windows-host instructions. Doesn't write to dist/.
     cmds:
       - |
         case "$(uname -s 2>/dev/null || echo Windows)" in
@@ -124,7 +124,7 @@ tasks:
               --target DoomViz_VST3 doomviz_unit_tests doomviz_integration_tests render_test
             cd ..
             echo "Built {{.BUILD_DIR}}-win/DoomViz_artefacts/Release/VST3/{{.VST3_NAME}}"
-            echo "(dist/ left untouched — that's the committed macOS signed binary)"
+            echo "(dist/ untouched — that's the macOS local install staging dir)"
             ;;
           *)
             echo "Cross-platform Windows builds aren't supported from this host."

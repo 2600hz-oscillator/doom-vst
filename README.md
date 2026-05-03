@@ -92,11 +92,13 @@ routes:
 
 ## Install
 
-### macOS (no build)
-A prebuilt arm64 VST3 is committed under `dist/DoomViz.vst3` (binary tracked via git-lfs), signed with an Apple Developer ID and notarized + stapled, so it loads in any DAW without Gatekeeper warnings or `xattr -cr` workarounds.
+All install paths use the latest [GitHub Release](https://github.com/2600hz-oscillator/doom-vst/releases) — the macOS bundle is signed with an Apple Developer ID and notarized + stapled, so it loads in any DAW without Gatekeeper warnings or `xattr -cr` workarounds.
+
+### macOS (tagged release)
+Download `DoomViz-vX.Y.Z.vst3.zip` from the latest release, unzip, and drop the `.vst3` bundle into `~/Library/Audio/Plug-Ins/VST3/`.
 
 ```bash
-cp -R dist/DoomViz.vst3 ~/Library/Audio/Plug-Ins/VST3/
+unzip DoomViz-vX.Y.Z.vst3.zip -d ~/Library/Audio/Plug-Ins/VST3/
 ```
 
 Then rescan plugins in your DAW.

@@ -1,7 +1,13 @@
 # Build
 build/
+build-linux/
+build-win/
 *.o
 *.a
+
+# Local install staging — not committed; signed-and-shipped artifacts
+# come out of the tagged-release CI workflow.
+dist/
 
 # Test output (baselines are tracked separately)
 *.ppm
