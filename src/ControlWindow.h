@@ -5,6 +5,7 @@
 #include "patch/BandRowsSection.h"
 #include "patch/SpectrumSection.h"
 #include "patch/PlaceholderSection.h"
+#include "patch/SamplerPanel.h"
 #include <functional>
 #include <memory>
 
@@ -43,6 +44,9 @@ public:
 private:
     patch::VisualizerState& state;
 
+    juce::TextButton tabVfx { "DOOMED VFX" };
+    juce::TextButton tabSfx { "DOOMED SFX" };
+
     juce::TextButton sceneA { "KILL ROOM" };
     juce::TextButton sceneB { "ANALYZER" };
     juce::TextButton sceneC { "DOOM SPECTRUM" };
@@ -59,10 +63,13 @@ private:
     patch::SpectrumSection spectrumSection;
     patch::PlaceholderSection killRoomSection { "Kill Room" };
     patch::PlaceholderSection analyzerSection { "Analyzer" };
+    patch::SamplerPanel       samplerPanel;
 
-    int activeScene = 0;
+    int  activeScene = 0;
     bool isFullscreen = false;
     bool dirty = false;
+    enum class ActiveTab { Vfx, Sfx };
+    ActiveTab activeTab { ActiveTab::Vfx };
 
     juce::Component* activeSection();
     void selectScene(int index);
@@ -71,6 +78,8 @@ private:
     void applyChanges();
     void revertChanges();
     void loadFromState();
+    void selectTab(ActiveTab tab);
+    void styleTab(juce::TextButton& btn, bool active);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ControlPanel)
 };

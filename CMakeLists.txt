@@ -46,6 +46,7 @@ target_sources(DoomViz PRIVATE
     src/audio/BandAnalyzer.cpp
     src/audio/MidiHandler.cpp
     src/audio/SamplerEngine.cpp
+    src/audio/VarispeedEngine.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
     src/scenes/SceneManager.cpp
@@ -56,6 +57,7 @@ target_sources(DoomViz PRIVATE
     src/patch/BandRowsSection.cpp
     src/patch/SpectrumSection.cpp
     src/patch/PlaceholderSection.cpp
+    src/patch/SamplerPanel.cpp
     $<$<PLATFORM_ID:Darwin>:src/MacFullscreen.mm>
 )
 
@@ -156,9 +158,13 @@ target_sources(doomviz_unit_tests PRIVATE
     test/unit/test_signal_router.cpp
     test/unit/test_visualizer_state.cpp
     test/unit/test_sprite_catalog.cpp
+    test/unit/test_varispeed_engine.cpp
+    test/unit/test_sampler_engine.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
     src/audio/MidiHandler.cpp
+    src/audio/SamplerEngine.cpp
+    src/audio/VarispeedEngine.cpp
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
     src/patch/VisualizerState.cpp
@@ -200,11 +206,13 @@ target_sources(doomviz_integration_tests PRIVATE
     test/integration/test_processor_midi.cpp
     test/integration/test_processor_state.cpp
     test/integration/test_state_persistence.cpp
+    test/integration/test_sampler_audio.cpp
     test/integration/processor_test_stub.cpp
     src/PluginProcessor.cpp
     src/audio/SignalBus.cpp
     src/audio/MidiHandler.cpp
     src/audio/SamplerEngine.cpp
+    src/audio/VarispeedEngine.cpp
     src/patch/VisualizerState.cpp
 )
 
