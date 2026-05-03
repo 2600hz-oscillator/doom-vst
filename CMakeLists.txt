@@ -60,6 +60,8 @@ target_sources(DoomViz PRIVATE
     src/patch/SamplerPanel.cpp
     src/patch/PadCell.cpp
     src/patch/WaveformView.cpp
+    src/patch/SampleSetIO.cpp
+    src/patch/SampleResample.cpp
     $<$<PLATFORM_ID:Darwin>:src/MacFullscreen.mm>
 )
 
@@ -133,6 +135,18 @@ foreach(target DoomViz_VST3 DoomViz_AU DoomViz_Standalone)
             "${BUNDLE_DIR_EXPR}/Contents/Resources/sounds"
         COMMENT "Bundling Doom shareware sounds into ${target}"
     )
+
+    # Bundle prebuilt sample sets. default.dvset is the kit auto-loaded
+    # on a fresh plugin instance; SampleSetIO::loadFromFile reads it +
+    # resamples to the host SR.
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "${BUNDLE_DIR_EXPR}/Contents/Resources/sets"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/resources/sets"
+            "${BUNDLE_DIR_EXPR}/Contents/Resources/sets"
+        COMMENT "Bundling sample sets into ${target}"
+    )
 endforeach()
 
 # --- Test harness (standalone C program, not the plugin) ---
@@ -175,6 +189,7 @@ target_sources(doomviz_unit_tests PRIVATE
     test/unit/test_sprite_catalog.cpp
     test/unit/test_varispeed_engine.cpp
     test/unit/test_sampler_engine.cpp
+    test/unit/test_sample_set_io.cpp
     src/audio/SignalBus.cpp
     src/audio/AudioAnalyzer.cpp
     src/audio/MidiHandler.cpp
@@ -183,6 +198,8 @@ target_sources(doomviz_unit_tests PRIVATE
     src/routing/RouteConfig.cpp
     src/routing/SignalRouter.cpp
     src/patch/VisualizerState.cpp
+    src/patch/SampleSetIO.cpp
+    src/patch/SampleResample.cpp
 )
 
 target_include_directories(doomviz_unit_tests PRIVATE
@@ -229,6 +246,8 @@ target_sources(doomviz_integration_tests PRIVATE
     src/audio/SamplerEngine.cpp
     src/audio/VarispeedEngine.cpp
     src/patch/VisualizerState.cpp
+    src/patch/SampleSetIO.cpp
+    src/patch/SampleResample.cpp
 )
 
 target_include_directories(doomviz_integration_tests PRIVATE

@@ -69,5 +69,10 @@ private:
     std::vector<float> monoBuffer;
     double currentSampleRate = 44100.0;
 
+    // One-shot guard for the bundled default-kit auto-load. Set on the
+    // first prepareToPlay; never reloads thereafter. A user who clears
+    // all pads and saves keeps that state on subsequent reloads.
+    bool defaultKitAttempted = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DoomVizProcessor)
 };

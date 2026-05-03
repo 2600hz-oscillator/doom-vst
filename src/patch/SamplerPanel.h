@@ -48,6 +48,9 @@ private:
     juce::Label header { {}, "-- DOOMED SFX --" };
     juce::Label hint;
 
+    juce::TextButton saveSetBtn { "SAVE SET" };
+    juce::TextButton loadSetBtn { "LOAD SET" };
+
     // Held while a FileChooser is open; the async callback fires after
     // the chooser dialog closes.
     std::unique_ptr<juce::FileChooser> fileChooser;
@@ -59,9 +62,18 @@ private:
     void commitPad(int padIndex, juce::String name,
                    double srcSampleRate, std::vector<float> data);
 
+    // SAVE SET / LOAD SET handlers. Both async via FileChooser; the
+    // chooser holds for the lifetime of the dialog.
+    void handleSaveSet();
+    void handleLoadSet();
+
     // Resolve the bundled sounds dir; same lookup pattern as DOOM1.WAD
     // resolution in DoomViewport.
     static juce::File findBundledSoundsDir();
+
+    // User's "DoomViz Sets" folder under ~/Documents (created on first save).
+    // Doubles as the default directory for both SAVE and LOAD chooser.
+    static juce::File userSetsDir();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerPanel)
 };
